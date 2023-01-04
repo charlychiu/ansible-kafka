@@ -42,7 +42,7 @@ controller.quorum.voters={{ kafka_kraft_quorum_quorum_voters }}
 #   EXAMPLE:
 #     listeners = PLAINTEXT://your.host.name:9092
 # listeners=PLAINTEXT://:9092,CONTROLLER://:9093
-listeners={{ kafka_plaintext_listeners | join(",")}}{{ kafka_controller_listeners | join(",")}}
+listeners={{ kafka_plaintext_listeners | join(",")}},{{ kafka_controller_listeners | join(",")}}
 
 # Name of listener used for communication between brokers.
 inter.broker.listener.name=PLAINTEXT

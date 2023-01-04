@@ -140,6 +140,14 @@
   tags:
     - kafka_config
 
+- name: Create kraft cluster id
+  command: 'bin/kafka-storage.sh format -t {{ kafka_cluster_id }} -c config/kraft/server.properties'
+  args:
+    chdir: '{{ kafka_dir }}'
+  when: kafka_kraft
+  tags:
+    - kafka_config
+
 - name: Template configuration file to zookeeper.properties
   template:
     src: zookeeper.properties.j2

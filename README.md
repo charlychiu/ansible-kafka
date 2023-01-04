@@ -114,9 +114,10 @@ log4j-related available variables.
 
 ### Ports
 
-| Port | Description         |
-| ---- | ------------------- |
-| 9092 | Kafka listener port |
+| Port | Description                                         |
+|------|-----------------------------------------------------|
+| 9092 | Kafka plaintext listener port                       |
+| 9093 | Kafka controller listener port (when KRaft enabled) |
 
 ### Directories and Files
 

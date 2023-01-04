@@ -2,7 +2,7 @@
 
 ![Lint Code Base] ![Molecule]
 
-Ansible role to install and configure [Apache Kafka] 3.2.3
+Ansible role to install and configure [Apache Kafka] 3.3.1
 
 [Apache Kafka] is a distributed event streaming platform using publish-subscribe
 topics. Applications and streaming components can produce and consume messages
@@ -45,7 +45,7 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | ---------------------------------------------- | ------------------------------------ |
 | kafka_download_base_url                        | <https://downloads.apache.org/kafka> |
 | kafka_download_validate_certs                  | yes                                  |
-| kafka_version                                  | 3.2.3                                |
+| kafka_version                                  | 3.3.1                                |
 | kafka_scala_version                            | 2.13                                 |
 | kafka_create_user_group                        | true                                 |
 | kafka_user                                     | kafka                                |
@@ -58,7 +58,8 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_broker_id                                | 0                                    |
 | kafka_java_heap                                | -Xms1G -Xmx1G                        |
 | kafka_background_threads                       | 10                                   |
-| kafka_listeners                                | PLAINTEXT://:9092                    |
+| kafka_plaintext_listeners                      | PLAINTEXT://:9092                    |
+| kafka_controller_listeners                     | CONTROLLER://:9093                   |
 | kafka_num_network_threads                      | 3                                    |
 | kafka_num_io_threads                           | 8                                    |
 | kafka_num_replica_fetchers                     | 1                                    |

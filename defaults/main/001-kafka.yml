@@ -3,7 +3,7 @@
 # kafka_download_base_url should be set to https://archive.apache.org/dist/kafka/ for older versions than the current
 kafka_download_base_url: https://downloads.apache.org/kafka
 kafka_download_validate_certs: yes
-kafka_version: 3.2.3
+kafka_version: 3.3.1
 kafka_scala_version: 2.13
 
 # The kafka user and group to create files/dirs with and for running the kafka service
@@ -22,6 +22,9 @@ kafka_start: yes
 # Restart kafka on configuration change
 kafka_restart: yes
 
+# Using KRaft as default instead of ZooKeeper
+kafka_kraft: true
+
 ############################# Server #############################
 
 # The id of the broker. This must be set to a unique integer for each broker.
@@ -33,6 +36,10 @@ kafka_java_heap: "-Xms1G -Xmx1G"
 # The number of threads to use for various background processing tasks
 kafka_background_threads: 10
 
+# The connect string for the controller quorum
+# e.g. 1@10.0.0.1:9093,2@10.0.0.2:9093,3@10.0.0.3:9093
+kafka_kraft_quorum_quorum_voters: "1@127.0.0.1:9093"
+
 # The address the socket server listens on. It will get the value returned from
 # java.net.InetAddress.getCanonicalHostName() if not configured.
 #   FORMAT:
@@ -40,8 +47,11 @@ kafka_background_threads: 10
 #   EXAMPLE:
 #     listeners = PLAINTEXT://your.host.name:9092
 #listeners=PLAINTEXT://:9092
-kafka_listeners:
+kafka_plaintext_listeners:
   - "PLAINTEXT://:9092"
+
+kafka_controller_listeners:
+  - "PLAINTEXT://:9093"
 
 # Hostname and port the broker will advertise to producers and consumers. If not set,
 # it uses the value for "listeners" if configured.  Otherwise, it will use the value

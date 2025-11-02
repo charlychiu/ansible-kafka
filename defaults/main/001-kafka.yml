@@ -39,14 +39,14 @@ kafka_background_threads: 10
 #     listeners = security_protocol://host_name:port
 #   EXAMPLE:
 #     listeners = PLAINTEXT://your.host.name:9092
-#listeners=PLAINTEXT://:9092
+# listeners=PLAINTEXT://:9092
 kafka_listeners:
   - "PLAINTEXT://:9092"
 
 # Hostname and port the broker will advertise to producers and consumers. If not set,
 # it uses the value for "listeners" if configured.  Otherwise, it will use the value
 # returned from java.net.InetAddress.getCanonicalHostName().
-#advertised.listeners=PLAINTEXT://your.host.name:9092
+# advertised.listeners=PLAINTEXT://your.host.name:9092
 # kafka_advertised_listeners:
 #   - "SASL_SSL://:9094"
 #   - "PLAINTEXT://:9092"

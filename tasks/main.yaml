@@ -38,7 +38,7 @@
     url: '{{ kafka_download_base_url }}/{{ kafka_version }}/kafka_{{ kafka_scala_version }}-{{ kafka_version }}.tgz'
     dest: /tmp
     validate_certs: '{{ kafka_download_validate_certs }}'
-    mode: 0644
+    mode: '0644'
   when: not dir.stat.exists
   tags:
     - kafka_download
@@ -70,7 +70,7 @@
     state: directory
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0755
+    mode: '0755'
   with_items: "{{ kafka_data_log_dirs.split(',') }}"
   tags:
     - kafka_dirs
@@ -81,7 +81,7 @@
     state: directory
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0755
+    mode: '0755'
   tags:
     - kafka_dirs
 
@@ -99,7 +99,7 @@
     state: link
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0755
+    mode: '0755'
     follow: no
   when: not application_logs_dir.stat.exists
   tags:
@@ -111,7 +111,7 @@
     state: directory
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0755
+    mode: '0755'
   tags:
     - kafka_dirs
 
@@ -121,7 +121,7 @@
     dest: '{{ kafka_dir }}/config/server.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   notify:
     - Restart kafka service
   tags:
@@ -133,7 +133,7 @@
     dest: '{{ kafka_dir }}/config/zookeeper.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -143,7 +143,7 @@
     dest: '{{ kafka_dir }}/config/connect-standalone.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -153,7 +153,7 @@
     dest: '{{ kafka_dir }}/config/connect-distributed.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -163,7 +163,7 @@
     dest: '{{ kafka_dir }}/config/producer.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -173,7 +173,7 @@
     dest: '{{ kafka_dir }}/config/consumer.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -183,7 +183,7 @@
     dest: '{{ kafka_dir }}/config/log4j2.xml'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -253,7 +253,7 @@
     dest: /etc/init.d/kafka
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   notify:
     - Reload initd
     - Restart kafka service
@@ -267,7 +267,7 @@
     dest: '{{ kafka_unit_path }}'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   notify:
     - Restart kafka systemd
   when: ansible_os_family == "RedHat" and ansible_distribution_major_version > '6' or ansible_os_family == "Debian"

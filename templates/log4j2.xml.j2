@@ -27,7 +27,7 @@
 
     <!-- Kafka Server Log Appender -->
     <RollingFile name="kafkaAppender" fileName="${sys:kafka.logs.dir}/server.log"
-                 filePattern="${sys:kafka.logs.dir}/server.log.%d{{{ log4j2_file_pattern_date }}}">
+                 filePattern="${sys:kafka.logs.dir}/server.log.%d{'{{ log4j2_file_pattern_date }}'}">
       <PatternLayout pattern="{{ log4j2_pattern_layout }}"/>
       <Policies>
         <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -36,7 +36,7 @@
 
     <!-- State Change Log Appender -->
     <RollingFile name="stateChangeAppender" fileName="${sys:kafka.logs.dir}/state-change.log"
-                 filePattern="${sys:kafka.logs.dir}/state-change.log.%d{{{ log4j2_file_pattern_date }}}">
+                 filePattern="${sys:kafka.logs.dir}/state-change.log.%d{'{{ log4j2_file_pattern_date }}'}">
       <PatternLayout pattern="{{ log4j2_pattern_layout }}"/>
       <Policies>
         <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -45,7 +45,7 @@
 
     <!-- Request Log Appender -->
     <RollingFile name="requestAppender" fileName="${sys:kafka.logs.dir}/kafka-request.log"
-                 filePattern="${sys:kafka.logs.dir}/kafka-request.log.%d{{{ log4j2_file_pattern_date }}}">
+                 filePattern="${sys:kafka.logs.dir}/kafka-request.log.%d{'{{ log4j2_file_pattern_date }}'}">
       <PatternLayout pattern="{{ log4j2_pattern_layout }}"/>
       <Policies>
         <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -54,7 +54,7 @@
 
     <!-- Log Cleaner Appender -->
     <RollingFile name="cleanerAppender" fileName="${sys:kafka.logs.dir}/log-cleaner.log"
-                 filePattern="${sys:kafka.logs.dir}/log-cleaner.log.%d{{{ log4j2_file_pattern_date }}}">
+                 filePattern="${sys:kafka.logs.dir}/log-cleaner.log.%d{'{{ log4j2_file_pattern_date }}'}">
       <PatternLayout pattern="{{ log4j2_pattern_layout }}"/>
       <Policies>
         <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -63,7 +63,7 @@
 
     <!-- Controller Log Appender -->
     <RollingFile name="controllerAppender" fileName="${sys:kafka.logs.dir}/controller.log"
-                 filePattern="${sys:kafka.logs.dir}/controller.log.%d{{{ log4j2_file_pattern_date }}}">
+                 filePattern="${sys:kafka.logs.dir}/controller.log.%d{'{{ log4j2_file_pattern_date }}'}">
       <PatternLayout pattern="{{ log4j2_pattern_layout }}"/>
       <Policies>
         <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -72,7 +72,7 @@
 
     <!-- Authorizer Log Appender -->
     <RollingFile name="authorizerAppender" fileName="${sys:kafka.logs.dir}/kafka-authorizer.log"
-                 filePattern="${sys:kafka.logs.dir}/kafka-authorizer.log.%d{{{ log4j2_file_pattern_date }}}">
+                 filePattern="${sys:kafka.logs.dir}/kafka-authorizer.log.%d{'{{ log4j2_file_pattern_date }}'}">
       <PatternLayout pattern="{{ log4j2_pattern_layout }}"/>
       <Policies>
         <TimeBasedTriggeringPolicy interval="1" modulate="true"/>

@@ -32,12 +32,14 @@ this Ansible playbook:
 
 ## Supported Platforms
 
-- RedHat 6
 - RedHat 7
 - RedHat 8
-- Debian 10.x
-- Ubuntu 18.04.x
-- Ubuntu 20.04.x
+- RedHat 9
+- Debian 10.x (Buster)
+- Debian 11.x (Bullseye)
+- Ubuntu 18.04.x (Bionic)
+- Ubuntu 20.04.x (Focal)
+- Ubuntu 22.04.x (Jammy)
 
 ## Requirements
 

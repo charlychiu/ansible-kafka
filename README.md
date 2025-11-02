@@ -2,7 +2,7 @@
 
 ![Lint Code Base] ![Molecule]
 
-Ansible role to install and configure [Apache Kafka] 3.8
+Ansible role to install and configure [Apache Kafka] 4.0
 
 [Apache Kafka] is a distributed event streaming platform using publish-subscribe
 topics. Applications and streaming components can produce and consume messages
@@ -17,7 +17,11 @@ This Ansible role does not handle the migration process of upgrading from older
 versions of Kafka. Please ensure that you read the upgrade documentation and
 update the relevant configuration files before running this role.
 
-<https://kafka.apache.org/35/documentation.html#upgrade>
+<https://kafka.apache.org/40/documentation.html#upgrade>
+
+**Important for Kafka 4.x:** Log4j2 is now required. The old Log4j 1.x 
+configuration is no longer supported. This role automatically uses Log4j2 
+configuration.
 
 For example, depending on how you upgrade, the `server.properties` file may need
 the following properties added to reflect your current version prior to running
@@ -38,7 +42,7 @@ this Ansible playbook:
 ## Requirements
 
 - [Apache ZooKeeper]
-- Java 8 (deprecated) / 11 / 17
+- Java 11 or higher (Java 17 recommended)
 
 The below Apache ZooKeeper role from Ansible Galaxy can be used if one is
 needed.
@@ -60,7 +64,7 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | ---------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------- |
 | kafka_download_base_url                        | <https://downloads.apache.org/kafka> |                                                                  |
 | kafka_download_validate_certs                  | yes                                  |                                                                  |
-| kafka_version                                  | 3.8.1                                |                                                                  |
+| kafka_version                                  | 4.0.1                                |                                                                  |
 | kafka_scala_version                            | 2.13                                 |                                                                  |
 | kafka_create_user_group                        | true                                 |                                                                  |
 | kafka_user                                     | kafka                                |                                                                  |
@@ -102,7 +106,7 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_server_config_params                     |                                      | General dictionary that will be templated into server.properties |
 
 See [log4j.yml](./defaults/main/002-log4j.yml) for detailed  
-log4j-related available variables.
+Log4j2-related available variables. Note: Kafka 4.x uses Log4j2 exclusively.
 
 ## Starting and Stopping Kafka services using systemd
 
@@ -129,9 +133,13 @@ log4j-related available variables.
 
 ### Ports
 
-| Port | Description         |
-| ---- | ------------------- |
-| 9092 | Kafka listener port |
+| Port | Description                  |
+| ---- | ---------------------------- |
+| 9092 | Kafka listener port          |
+| JMX  | JMX metrics (configurable)   |
+
+Note: JMX metrics are available by default for monitoring Kafka broker performance.
+Configure JMX port via `kafka_opts` variable if needed.
 
 ### Directories and Files
 
@@ -141,6 +149,7 @@ log4j-related available variables.
 | Kafka configuration directory (symlink to /opt/kafka/config) | `/etc/kafka`                            |
 | Directory to store data files                                | `/var/lib/kafka/logs`                   |
 | Directory to store logs files                                | `/var/log/kafka`                        |
+| Log4j2 configuration file                                    | `/etc/kafka/log4j2.xml`                 |
 | Kafka service                                                | `/usr/lib/systemd/system/kafka.service` |
 
 ## Example Playbook

@@ -8,6 +8,65 @@
   tags:
     - always
 
+- name: Ensure Java runtime packages are installed
+  ansible.builtin.package:
+    name: '{{ kafka_java_packages }}'
+    state: present
+  when: kafka_java_packages | length > 0
+  become: true
+  tags:
+    - kafka_java
+
+- name: Initialize Java environment overrides
+  ansible.builtin.set_fact:
+    kafka_java_env: {}
+  tags:
+    - kafka_java
+
+- name: Build Java environment overrides when JAVA_HOME is set
+  ansible.builtin.set_fact:
+    kafka_java_env:
+      JAVA_HOME: "{{ kafka_java_home }}"
+      PATH: "{{ kafka_java_home }}/bin:{{ ansible_env.PATH | default('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') }}"
+  when: kafka_java_home | default('') | length > 0
+  tags:
+    - kafka_java
+
+- name: Determine Java executable path
+  ansible.builtin.set_fact:
+    kafka_java_executable: >-
+      {{ (kafka_java_home | default('') | length > 0)
+         | ternary(kafka_java_home ~ '/bin/java', 'java') }}
+  tags:
+    - kafka_java
+
+- name: Capture Java version string
+  ansible.builtin.shell: |
+    {{ kafka_java_executable }} -version 2>&1 | awk -F '"' '/version/ {print $2; exit}'
+  args:
+    executable: /bin/bash
+  register: kafka_java_version
+  changed_when: false
+  failed_when: kafka_java_version.rc != 0
+  environment: '{{ kafka_java_env | default({}) }}'
+  tags:
+    - kafka_java
+
+- name: Cache Java version string
+  ansible.builtin.set_fact:
+    kafka_java_version_string: '{{ kafka_java_version.stdout | trim }}'
+  tags:
+    - kafka_java
+
+- name: Ensure Java 17 or newer is available
+  ansible.builtin.assert:
+    that:
+      - kafka_java_version_string | length > 0
+      - kafka_java_version_string is version('17', '>=')
+    fail_msg: 'Kafka requires Java 17 or newer. Detected version: {{ kafka_java_version_string | default("unknown") }}'
+  tags:
+    - kafka_java
+
 - name: Create kafka group
   ansible.builtin.group:
     name: '{{ kafka_group }}'
@@ -276,6 +335,7 @@
   register: cluster_uuid
   when: not cluster_uuid_file.stat.exists
   changed_when: false
+  environment: '{{ kafka_java_env | default({}) }}'
   tags:
     - kafka_service
 
@@ -301,10 +361,11 @@
 - name: Format KRaft storage
   ansible.builtin.command:
     cmd: '{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ cluster_uuid.stdout if not cluster_uuid_file.stat.exists else (cluster_uuid_content.content | b64decode | trim) }} -c {{ kafka_dir }}/config/server.properties'
-  become: yes
+  become: true
   become_user: '{{ kafka_user }}'
   when: not cluster_uuid_file.stat.exists
   changed_when: true
+  environment: '{{ kafka_java_env | default({}) }}'
   tags:
     - kafka_service
 

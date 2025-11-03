@@ -1,2 +1,5 @@
 ---
 kafka_unit_path: /usr/lib/systemd/system/kafka.service
+kafka_java_packages:
+  - java-17-openjdk
+kafka_java_home: /usr/lib/jvm/java-17-openjdk

@@ -41,6 +41,10 @@ kafka_controller_quorum_voters: "1@localhost:9093"
 # The Java heap size (memory) allocation (xmx, xms)
 kafka_java_heap: "-Xms1G -Xmx1G"
 
+# Packages and JAVA_HOME used to satisfy Kafka's Java 17+ requirement.
+kafka_java_packages: []
+kafka_java_home: ""
+
 # The address the socket server listens on. It will get the value returned from
 # java.net.InetAddress.getCanonicalHostName() if not configured.
 #   FORMAT:

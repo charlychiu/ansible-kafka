@@ -15,13 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This configuration file is intended for use in ZK-based mode, where Apache ZooKeeper is required.
+# This configuration file is for Kafka 4.x running in KRaft mode (ZooKeeper-free).
 # See kafka.server.KafkaConfig for additional details and defaults
 
-############################# Server Basics #############################
+############################# Server Basics (KRaft Mode) #############################
 
-# The id of the broker. This must be set to a unique integer for each broker.
-broker.id={{ kafka_broker_id }}
+# The node id for this server. Must be unique within the cluster.
+node.id={{ kafka_node_id }}
+
+# The roles this server plays: 'broker', 'controller', or 'broker,controller'
+process.roles={{ kafka_process_roles }}
+
+# Controller quorum configuration
+controller.quorum.voters={{ kafka_controller_quorum_voters }}
+
+# Controller listener name
+controller.listener.names={{ kafka_controller_listener_names }}
 
 # Enable auto creation of topic on the server
 auto.create.topics.enable={{ kafka_auto_create_topics_enable }}
@@ -32,9 +41,6 @@ delete.topic.enable={{ kafka_delete_topic_enable }}
 
 # Default replication factor for automatically created topics.
 default.replication.factor={{ kafka_default_replication_factor }}
-
-# The number of threads to use for various background processing tasks
-background.threads={{ kafka_background_threads }}
 
 ############################# Socket Server Settings #############################
 
@@ -140,19 +146,8 @@ log.segment.bytes={{ kafka_log_segment_bytes }}
 # to the retention policies
 log.retention.check.interval.ms={{ kafka_log_retention_check_interval_ms }}
 
-############################# Zookeeper #############################
-
-# Zookeeper connection string (see zookeeper docs for details).
-# This is a comma separated host:port pairs, each corresponding to a zk
-# server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002".
-# You can also append an optional chroot string to the urls to specify the
-# root directory for all kafka znodes.
-zookeeper.connect={{ kafka_zookeeper_connect }}
-
 ############################# Timeout #############################
 
-# Timeout in ms for connecting to zookeeper
-zookeeper.connection.timeout.ms={{ kafka_zookeeper_connection_timeout_ms }}
 # Offset commit will be delayed until all replicas for the offsets topic receive the commit or this timeout is reached. This is similar to the producer request timeout.
 offsets.commit.timeout.ms={{ kafka_offsets_commit_timeout_ms }}
 # Max wait time for each fetcher request issued by follower replicas. This value should always be less than the replica.lag.time.max.ms at all times to prevent frequent shrinking of ISR for low throughput topics

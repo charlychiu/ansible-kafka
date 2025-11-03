@@ -127,16 +127,6 @@
   tags:
     - kafka_config
 
-- name: Template configuration file to zookeeper.properties
-  ansible.builtin.template:
-    src: zookeeper.properties.j2
-    dest: '{{ kafka_dir }}/config/zookeeper.properties'
-    group: '{{ kafka_group }}'
-    owner: '{{ kafka_user }}'
-    mode: '0644'
-  tags:
-    - kafka_config
-
 - name: Template configuration file to connect-standalone.properties
   ansible.builtin.template:
     src: connect-standalone.properties.j2
@@ -271,6 +261,50 @@
   notify:
     - Restart kafka systemd
   when: ansible_os_family == "RedHat" and ansible_distribution_major_version > '6' or ansible_os_family == "Debian"
+  tags:
+    - kafka_service
+
+- name: Check if KRaft cluster UUID file exists
+  ansible.builtin.stat:
+    path: '{{ kafka_dir }}/config/cluster-uuid.txt'
+  register: cluster_uuid_file
+  tags:
+    - kafka_service
+
+- name: Generate KRaft cluster UUID
+  ansible.builtin.command: '{{ kafka_dir }}/bin/kafka-storage.sh random-uuid'
+  register: cluster_uuid
+  when: not cluster_uuid_file.stat.exists
+  changed_when: false
+  tags:
+    - kafka_service
+
+- name: Save cluster UUID to file
+  ansible.builtin.copy:
+    content: '{{ cluster_uuid.stdout }}'
+    dest: '{{ kafka_dir }}/config/cluster-uuid.txt'
+    owner: '{{ kafka_user }}'
+    group: '{{ kafka_group }}'
+    mode: '0644'
+  when: not cluster_uuid_file.stat.exists
+  tags:
+    - kafka_service
+
+- name: Read cluster UUID from file
+  ansible.builtin.slurp:
+    src: '{{ kafka_dir }}/config/cluster-uuid.txt'
+  register: cluster_uuid_content
+  when: cluster_uuid_file.stat.exists
+  tags:
+    - kafka_service
+
+- name: Format KRaft storage
+  ansible.builtin.command:
+    cmd: '{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ cluster_uuid.stdout if not cluster_uuid_file.stat.exists else (cluster_uuid_content.content | b64decode | trim) }} -c {{ kafka_dir }}/config/server.properties'
+  become: yes
+  become_user: '{{ kafka_user }}'
+  when: not cluster_uuid_file.stat.exists
+  changed_when: true
   tags:
     - kafka_service
 

@@ -87,9 +87,6 @@
       <AppenderRef ref="kafkaAppender"/>
     </Root>
 
-    <!-- ZooKeeper client logging -->
-    <Logger name="org.apache.zookeeper" level="{{ log4j2_logger_org_apache_zookeeper }}"/>
-
     <!-- Kafka broker logging -->
     <Logger name="kafka" level="{{ log4j2_logger_kafka }}"/>
     <Logger name="org.apache.kafka" level="{{ log4j2_logger_org_apache_kafka }}"/>

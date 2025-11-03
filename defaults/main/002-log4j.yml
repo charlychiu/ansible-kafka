@@ -6,7 +6,6 @@
 log4j2_root_logger_level: "INFO"
 
 # Logger levels - these can be adjusted for different components
-log4j2_logger_org_apache_zookeeper: "INFO"
 log4j2_logger_kafka: "INFO"
 log4j2_logger_org_apache_kafka: "INFO"
 log4j2_logger_kafka_request_logger: "WARN"

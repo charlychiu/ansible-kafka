@@ -22,16 +22,24 @@ kafka_start: yes
 # Restart kafka on configuration change
 kafka_restart: yes
 
-############################# Server #############################
+############################# Server / KRaft #############################
 
-# The id of the broker. This must be set to a unique integer for each broker.
-kafka_broker_id: 0
+# The node id for this server in KRaft mode. Must be unique within the cluster.
+# This replaces broker.id in ZooKeeper mode.
+kafka_node_id: 1
+
+# The roles this server will play: 'broker', 'controller', or 'broker,controller'
+# Combined mode (broker,controller) is simpler for small clusters
+# Separate roles recommended for production clusters with many partitions
+kafka_process_roles: "broker,controller"
+
+# Controller quorum voter list: id@host:port,id@host:port,...
+# Example for 3-node cluster: "1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093"
+# For single-node development: "1@localhost:9093"
+kafka_controller_quorum_voters: "1@localhost:9093"
 
 # The Java heap size (memory) allocation (xmx, xms)
 kafka_java_heap: "-Xms1G -Xmx1G"
-
-# The number of threads to use for various background processing tasks
-kafka_background_threads: 10
 
 # The address the socket server listens on. It will get the value returned from
 # java.net.InetAddress.getCanonicalHostName() if not configured.
@@ -40,8 +48,13 @@ kafka_background_threads: 10
 #   EXAMPLE:
 #     listeners = PLAINTEXT://your.host.name:9092
 # listeners=PLAINTEXT://:9092
+# KRaft mode requires CONTROLLER listener in addition to broker listeners
 kafka_listeners:
   - "PLAINTEXT://:9092"
+  - "CONTROLLER://:9093"
+
+# Controller listener name (required for KRaft mode)
+kafka_controller_listener_names: "CONTROLLER"
 
 # Hostname and port the broker will advertise to producers and consumers. If not set,
 # it uses the value for "listeners" if configured.  Otherwise, it will use the value
@@ -110,26 +123,7 @@ kafka_default_replication_factor: 1
 
 kafka_group_initial_rebalance_delay_ms: 0
 
-############################# Zookeeper #############################
-
-# Zookeeper connection string (see zookeeper docs for details).
-# This is a comma separated host:port pairs, each corresponding to a zk
-# server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002".
-# You can also append an optional chroot string to the urls to specify the
-# root directory for all kafka znodes.
-kafka_zookeeper_connect: "localhost:2181"
-
-# the directory where the snapshot is stored.
-kafka_zookeeper_data_dir: /tmp/zookeeper
-# the port at which the clients will connect
-kafka_zookeeper_client_port: 2181
-# disable the per-ip limit on the number of connections since this is a non-production config
-kafka_zookeeper_max_client_cnxns: 0
-
 ############################# Timeout #############################
-
-# Timeout in ms for connecting to zookeeper
-kafka_zookeeper_connection_timeout_ms: 6000
 
 # Offset commit will be delayed until all replicas for the offsets topic receive the commit or this timeout is reached. This is similar to the producer request timeout.
 kafka_offsets_commit_timeout_ms: 5000

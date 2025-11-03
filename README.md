@@ -19,16 +19,10 @@ update the relevant configuration files before running this role.
 
 <https://kafka.apache.org/40/documentation.html#upgrade>
 
-**Important for Kafka 4.x:** Log4j2 is now required. The old Log4j 1.x 
-configuration is no longer supported. This role automatically uses Log4j2 
-configuration.
-
-For example, depending on how you upgrade, the `server.properties` file may need
-the following properties added to reflect your current version prior to running
-this Ansible playbook:
-
-- `inter.broker.protocol.version`
-- `log.message.format.version`
+**Important for Kafka 4.x:** 
+- **KRaft mode is required.** ZooKeeper is completely removed in Kafka 4.0. This role configures Kafka in KRaft mode only.
+- **Log4j2 is required.** The old Log4j 1.x configuration is no longer supported. This role automatically uses Log4j2 configuration.
+- If migrating from ZooKeeper-based Kafka (3.x or earlier), you must migrate to KRaft before upgrading to 4.0. See the [ZooKeeper to KRaft migration guide](https://kafka.apache.org/40/documentation/zk2kraft.html).
 
 ## Supported Platforms
 
@@ -43,15 +37,8 @@ this Ansible playbook:
 
 ## Requirements
 
-- [Apache ZooKeeper]
 - Java 11 or higher (Java 17 recommended)
-
-The below Apache ZooKeeper role from Ansible Galaxy can be used if one is
-needed.
-
-```sh
-ansible-galaxy install sleighzy.zookeeper
-```
+- Kafka 4.0+ runs in KRaft mode (no ZooKeeper required)
 
 Ansible 2.9.16 or 2.10.4 are the minimum required versions to workaround an
 issue with certain kernels that have broken the `systemd` status check. The
@@ -76,10 +63,12 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_start                                    | yes                                  |                                                                  |
 | kafka_restart                                  | yes                                  |                                                                  |
 | kafka_log_dir                                  | /var/log/kafka                       |                                                                  |
-| kafka_broker_id                                | 0                                    |                                                                  |
+| kafka_node_id                                  | 1                                    | Unique node ID for KRaft mode (replaces broker.id)              |
+| kafka_process_roles                            | broker,controller                    | Roles: broker, controller, or broker,controller                  |
+| kafka_controller_quorum_voters                 | 1@localhost:9093                     | Controller quorum voters for KRaft mode                          |
+| kafka_controller_listener_names                | CONTROLLER                           | Controller listener name for KRaft mode                          |
 | kafka_java_heap                                | -Xms1G -Xmx1G                        |                                                                  |
-| kafka_background_threads                       | 10                                   |                                                                  |
-| kafka_listeners                                | PLAINTEXT://:9092                    |                                                                  |
+| kafka_listeners                                | PLAINTEXT://:9092, CONTROLLER://:9093 | Broker and controller listeners                                  |
 | kafka_num_network_threads                      | 3                                    |                                                                  |
 | kafka_num_io_threads                           | 8                                    |                                                                  |
 | kafka_num_replica_fetchers                     | 1                                    |                                                                  |
@@ -101,8 +90,6 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_delete_topic_enable                      | true                                 |                                                                  |
 | kafka_default_replication_factor               | 1                                    |                                                                  |
 | kafka_group_initial_rebalance_delay_ms         | 0                                    |                                                                  |
-| kafka_zookeeper_connect                        | localhost:2181                       |                                                                  |
-| kafka_zookeeper_connection_timeout             | 6000                                 |                                                                  |
 | kafka_bootstrap_servers                        | localhost:9092                       |                                                                  |
 | kafka_consumer_group_id                        | kafka-consumer-group                 |                                                                  |
 | kafka_opts                                     |                                      | Custom JVM options (e.g., for JMX Exporter)                      |
@@ -125,10 +112,10 @@ Log4j2-related available variables. Note: Kafka 4.x uses Log4j2 exclusively.
 
 | Property                       | Value                |
 | ------------------------------ | -------------------- |
-| ZooKeeper connection           | localhost:2181       |
+| Kafka node ID (KRaft)          | 1                    |
+| Process roles (KRaft)          | broker,controller    |
 | Kafka bootstrap servers        | localhost:9092       |
 | Kafka consumer group ID        | kafka-consumer-group |
-| Kafka broker ID                | 0                    |
 | Number of partitions           | 1                    |
 | Data log file retention period | 168 hours            |
 | Enable auto topic creation     | false                |
@@ -138,7 +125,8 @@ Log4j2-related available variables. Note: Kafka 4.x uses Log4j2 exclusively.
 
 | Port | Description                  |
 | ---- | ---------------------------- |
-| 9092 | Kafka listener port          |
+| 9092 | Kafka broker listener port   |
+| 9093 | Kafka controller listener port (KRaft) |
 | JMX  | JMX metrics (configurable)   |
 
 Note: JMX metrics are available by default for monitoring Kafka broker performance.
@@ -179,7 +167,7 @@ ansible-lint -c ./.ansible-lint .
 ## Testing
 
 This module uses the [Ansible Molecule] testing framework. This test suite
-creates a Kafka and ZooKeeper cluster consisting of three nodes running within
+creates a Kafka cluster consisting of three nodes running in KRaft mode within
 Docker containers. Each container runs a different OS to test the supported
 platforms for this Ansible role.
 
@@ -231,7 +219,6 @@ molecule destroy
 [ansible-lint]: https://docs.ansible.com/ansible-lint/
 [ansible molecule]: https://molecule.readthedocs.io/
 [apache kafka]: http://kafka.apache.org/
-[apache zookeeper]: https://zookeeper.apache.org/
 [lint code base]:
   https://github.com/sleighzy/ansible-kafka/workflows/Lint%20Code%20Base/badge.svg
 [molecule]:

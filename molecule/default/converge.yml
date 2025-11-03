@@ -1,8 +1,6 @@
 ---
 - name: Converge
   hosts: all
-  roles:
-    - sleighzy.zookeeper
 
   tasks:
     - name: 'Test Kafka role'

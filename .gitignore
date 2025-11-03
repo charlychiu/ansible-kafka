@@ -6,6 +6,7 @@ super-linter.log
 # Symlink to current repository to enable Ansible to find the role
 # using its expected full name for Molecule tests
 .cache/
+.ansible/
 
 # Python virtual env for Molecule testing
 molecule-venv/

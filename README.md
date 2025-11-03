@@ -105,6 +105,7 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_zookeeper_connection_timeout             | 6000                                 |                                                                  |
 | kafka_bootstrap_servers                        | localhost:9092                       |                                                                  |
 | kafka_consumer_group_id                        | kafka-consumer-group                 |                                                                  |
+| kafka_opts                                     |                                      | Custom JVM options (e.g., for JMX Exporter)                      |
 | kafka_server_config_params                     |                                      | General dictionary that will be templated into server.properties |
 
 See [log4j.yml](./defaults/main/002-log4j.yml) for detailed  

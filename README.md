@@ -154,6 +154,48 @@ Add the below to a playbook to run those role against hosts belonging to the
     - sleighzy.kafka
 ```
 
+## Resetting / Cleaning Up Kafka Installation
+
+Two reset playbooks are provided to clean up Kafka installations:
+
+### reset-kafka.yml (Safe Reset)
+
+Stops the Kafka service and removes all Kafka files, but preserves the kafka user and group:
+
+```sh
+ansible-playbook -i inventory reset-kafka.yml
+```
+
+This playbook will:
+- Stop and disable the Kafka service
+- Remove all Kafka directories in `/opt/kafka*`
+- Remove `/var/lib/kafka` (data directory)
+- Remove `/var/log/kafka` (log directory)
+- Remove `/etc/kafka` (configuration directory)
+- **Keep** the kafka user and group
+
+### reset-kafka-with-user.yml (Complete Reset)
+
+Performs a complete cleanup including the kafka user and group:
+
+```sh
+ansible-playbook -i inventory reset-kafka-with-user.yml
+```
+
+This playbook includes a safety confirmation prompt. To skip the prompt:
+
+```sh
+ansible-playbook -i inventory reset-kafka-with-user.yml -e "confirm_reset=yes"
+```
+
+To target specific hosts:
+
+```sh
+ansible-playbook -i inventory reset-kafka.yml --limit kafka-node-1
+```
+
+**WARNING:** These operations are destructive and will permanently delete all Kafka data. Use with caution!
+
 ## Linting
 
 Linting should be done using [ansible-lint].

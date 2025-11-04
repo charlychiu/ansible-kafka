@@ -1,0 +1,104 @@
+---
+# Playbook to reset/cleanup Kafka installation
+# WARNING: This will completely remove Kafka and all its data!
+#
+# Usage:
+#   ansible-playbook -i inventory reset-kafka.yml
+#
+# To target specific hosts:
+#   ansible-playbook -i inventory reset-kafka.yml --limit kafka-node-1
+
+- name: Reset Kafka Installation
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    kafka_service_name: kafka
+    kafka_root_dir: /opt
+    kafka_dir: "{{ kafka_root_dir }}/kafka"
+    kafka_data_dir: /var/lib/kafka
+    kafka_log_dir: /var/log/kafka
+    kafka_config_dir: /etc/kafka
+
+  tasks:
+    - name: Stop Kafka service
+      ansible.builtin.service:
+        name: "{{ kafka_service_name }}"
+        state: stopped
+      ignore_errors: true
+      register: stop_service
+
+    - name: Display service stop result
+      ansible.builtin.debug:
+        msg: "Service stop result: {{ 'Success' if stop_service.changed else 'Service not running or not found' }}"
+
+    - name: Disable Kafka service
+      ansible.builtin.service:
+        name: "{{ kafka_service_name }}"
+        enabled: false
+      ignore_errors: true
+
+    - name: Remove systemd service file (RedHat)
+      ansible.builtin.file:
+        path: /usr/lib/systemd/system/kafka.service
+        state: absent
+      when: ansible_os_family == "RedHat"
+      ignore_errors: true
+
+    - name: Remove systemd service file (Debian)
+      ansible.builtin.file:
+        path: /lib/systemd/system/kafka.service
+        state: absent
+      when: ansible_os_family == "Debian"
+      ignore_errors: true
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+      when: ansible_service_mgr == "systemd"
+      ignore_errors: true
+
+    - name: Find all Kafka directories in /opt
+      ansible.builtin.find:
+        paths: "{{ kafka_root_dir }}"
+        patterns: "kafka*"
+        file_type: any
+      register: kafka_opt_dirs
+
+    - name: Remove all Kafka directories in /opt
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ kafka_opt_dirs.files }}"
+      when: kafka_opt_dirs.files | length > 0
+
+    - name: Remove Kafka data directory
+      ansible.builtin.file:
+        path: "{{ kafka_data_dir }}"
+        state: absent
+
+    - name: Remove Kafka log directory
+      ansible.builtin.file:
+        path: "{{ kafka_log_dir }}"
+        state: absent
+
+    - name: Remove Kafka config directory
+      ansible.builtin.file:
+        path: "{{ kafka_config_dir }}"
+        state: absent
+
+    - name: Display cleanup summary
+      ansible.builtin.debug:
+        msg:
+          - "Kafka reset completed!"
+          - "- Service stopped and disabled"
+          - "- Removed: {{ kafka_root_dir }}/kafka*"
+          - "- Removed: {{ kafka_data_dir }}"
+          - "- Removed: {{ kafka_log_dir }}"
+          - "- Removed: {{ kafka_config_dir }}"
+          - ""
+          - "Note: Kafka user/group were NOT removed."
+          - "To remove them manually, run:"
+          - "  userdel kafka"
+          - "  groupdel kafka"

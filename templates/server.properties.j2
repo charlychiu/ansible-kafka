@@ -20,57 +20,52 @@
 
 ############################# Server Basics (KRaft Mode) #############################
 
-# The node id for this server. Must be unique within the cluster.
+# The role of this server. Setting this puts us in KRaft mode
+process.roles=broker,controller
+
+# The node id associated with this instance's roles
 node.id={{ kafka_node_id }}
 
-# The roles this server plays: 'broker', 'controller', or 'broker,controller'
-process.roles={{ kafka_process_roles }}
-
-# Controller quorum configuration
+# List of controller endpoints used connect to the controller cluster
+controller.quorum.bootstrap.servers={{ kafka_controller_quorum_bootstrap_servers }}
+{% if kafka_controller_quorum_voters | default('') | length > 0 %}
 controller.quorum.voters={{ kafka_controller_quorum_voters }}
-
-# Controller listener name
-controller.listener.names={{ kafka_controller_listener_names }}
-
-# Enable auto creation of topic on the server
-auto.create.topics.enable={{ kafka_auto_create_topics_enable }}
-
-# Enables delete topic. Delete topic through the admin tool will have no
-# effect if this config is turned off
-delete.topic.enable={{ kafka_delete_topic_enable }}
-
-# Default replication factor for automatically created topics.
-default.replication.factor={{ kafka_default_replication_factor }}
+{% endif %}
 
 ############################# Socket Server Settings #############################
 
-# The address the socket server listens on. If not configured, the host name will be equal to the value of
-# java.net.InetAddress.getCanonicalHostName(), with PLAINTEXT listener name, and port 9092.
+# The address the socket server listens on.
+# Combined nodes (i.e. those with `process.roles=broker,controller`) must list the controller listener here at a minimum.
+# If the broker listener is not defined, the default listener will use a host name that is equal to the value of java.net.InetAddress.getCanonicalHostName(),
+# with PLAINTEXT listener name, and port 9092.
 #   FORMAT:
 #     listeners = listener_name://host_name:port
 #   EXAMPLE:
 #     listeners = PLAINTEXT://your.host.name:9092
-#listeners=PLAINTEXT://:9092
+#listeners=PLAINTEXT://:9092,CONTROLLER://:9093
 listeners={{ kafka_listeners | join(",")}}
 
-# Listener name, hostname and port the broker will advertise to clients.
+# Name of listener used for communication between brokers.
+inter.broker.listener.name=PLAINTEXT
+
+# Listener name, hostname and port the broker or the controller will advertise to clients.
 # If not set, it uses the value for "listeners".
-#advertised.listeners=PLAINTEXT://your.host.name:9092
-{% if kafka_advertised_listeners is defined %}
+#advertised.listeners=PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093
 advertised.listeners={{ kafka_advertised_listeners | join(",")}}
-{% endif %}
+
+# A comma-separated list of the names of the listeners used by the controller.
+# If no explicit mapping set in `listener.security.protocol.map`, default will be using PLAINTEXT protocol
+# This is required if running in KRaft mode.
+controller.listener.names=CONTROLLER
 
 # Maps listener names to security protocols, the default is for them to be the same. See the config documentation for more details
-#listener.security.protocol.map=PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
 
 # The number of threads that the server uses for receiving requests from the network and sending responses to the network
 num.network.threads={{ kafka_num_network_threads }}
 
 # The number of threads that the server uses for processing requests, which may include disk I/O
 num.io.threads={{ kafka_num_io_threads }}
-
-# Specify the number of threads that are used to replicate messages from a source broker. Increasing this value can lead to increased parallelism in I/O operations in the broker.
-num.replica.fetchers={{ kafka_num_replica_fetchers }}
 
 # The send buffer (SO_SNDBUF) used by the socket server
 socket.send.buffer.bytes={{ kafka_socket_send_buffer_bytes }}
@@ -80,9 +75,6 @@ socket.receive.buffer.bytes={{ kafka_socket_receive_buffer_bytes }}
 
 # The maximum size of a request that the socket server will accept (protection against OOM)
 socket.request.max.bytes={{ kafka_socket_request_max_bytes }}
-
-# The socket receive buffer for network requests
-replica.socket.receive.buffer.bytes={{ kafka_replica_socket_receive_buffer_bytes }}
 
 ############################# Log Basics #############################
 

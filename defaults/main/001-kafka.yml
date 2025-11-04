@@ -80,6 +80,7 @@ kafka_java_heap: "-Xms1G -Xmx1G"
 # Packages and JAVA_HOME used to satisfy Kafka's Java 17+ requirement.
 kafka_java_packages: []
 kafka_java_home: ""
+kafka_java_system_path: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # The address the socket server listens on. It will get the value returned from
 # java.net.InetAddress.getCanonicalHostName() if not configured.

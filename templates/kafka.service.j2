@@ -9,6 +9,10 @@ Type=simple
 StandardOutput=null
 Environment="KAFKA_HEAP_OPTS={{ kafka_java_heap }}"
 Environment="LOG_DIR={{ kafka_log_dir }}"
+{% if kafka_java_home %}
+Environment="JAVA_HOME={{ kafka_java_home }}"
+Environment="PATH={{ kafka_java_home }}/bin:{{ kafka_java_system_path | default('/usr/bin:/bin') }}"
+{% endif %}
 {% if kafka_opts is defined %}
 Environment="KAFKA_OPTS={{ kafka_opts }}"
 {% endif %}

@@ -1,5 +1,9 @@
 # {{ ansible_managed }}
 
+# https://github.com/apache/kafka/blob/4.0.1/config/server.properties
+# https://github.com/apache/kafka/blob/4.0.1/config/controller.properties
+# https://github.com/apache/kafka/blob/4.0.1/config/broker.properties
+
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
@@ -15,13 +19,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This configuration file is for Kafka 4.x running in KRaft mode (ZooKeeper-free).
-# See kafka.server.KafkaConfig for additional details and defaults
-
 ############################# Server Basics (KRaft Mode) #############################
 
 # The role of this server. Setting this puts us in KRaft mode
-process.roles=broker,controller
+process.roles={{ kafka_process_roles | default('broker') }}
 
 # The node id associated with this instance's roles
 node.id={{ kafka_node_id }}
@@ -29,9 +30,7 @@ node.id={{ kafka_node_id }}
 # Information about the KRaft controller quorum.
 # Uncomment controller.quorum.voters to use a static controller quorum.
 #controller.quorum.voters=1@localhost:9093
-{% if kafka_controller_quorum_voters | default('') | length > 0 %}
 controller.quorum.voters={{ kafka_controller_quorum_voters }}
-{% endif %}
 
 # List of controller endpoints used connect to the controller cluster
 controller.quorum.bootstrap.servers={{ kafka_controller_quorum_bootstrap_servers }}

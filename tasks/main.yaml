@@ -174,6 +174,26 @@
   tags:
     - kafka_dirs
 
+- name: Set listeners based on process roles
+  ansible.builtin.set_fact:
+    kafka_listeners: >-
+      {{ kafka_listeners if kafka_listeners is defined and kafka_listeners | length > 0
+         else (['PLAINTEXT://:9092'] if 'broker' in kafka_process_roles else []) +
+              (['CONTROLLER://:9093'] if 'controller' in kafka_process_roles else []) }}
+  tags:
+    - kafka_config
+
+- name: Set advertised listeners based on process roles
+  ansible.builtin.set_fact:
+    kafka_advertised_listeners: >-
+      {{ kafka_advertised_listeners if kafka_advertised_listeners is defined and kafka_advertised_listeners | length > 0
+         else (['PLAINTEXT://' + (hostvars[inventory_hostname].advertised_hostname | default(ansible_host | default(inventory_hostname))) + ':9092']
+               if 'broker' in kafka_process_roles else []) +
+              (['CONTROLLER://' + (hostvars[inventory_hostname].advertised_hostname | default(ansible_host | default(inventory_hostname))) + ':9093']
+               if 'controller' in kafka_process_roles else []) }}
+  tags:
+    - kafka_config
+
 - name: Template configuration file to server.properties
   ansible.builtin.template:
     src: server.properties.j2

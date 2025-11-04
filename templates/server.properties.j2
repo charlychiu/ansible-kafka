@@ -3,6 +3,7 @@
 # https://github.com/apache/kafka/blob/4.0.1/config/server.properties
 # https://github.com/apache/kafka/blob/4.0.1/config/controller.properties
 # https://github.com/apache/kafka/blob/4.0.1/config/broker.properties
+# https://kafka.apache.org/40/documentation.html
 
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -45,7 +46,8 @@ controller.quorum.bootstrap.servers={{ kafka_controller_quorum_bootstrap_servers
 #     listeners = listener_name://host_name:port
 #   EXAMPLE:
 #     listeners = PLAINTEXT://your.host.name:9092
-#listeners=PLAINTEXT://:9092,CONTROLLER://:9093
+#listeners=PLAINTEXT://:9092,CONTROLLER://:9093 --> broker + controller
+#listeners=PLAINTEXT://:9092 --> broker only
 listeners={{ kafka_listeners | join(",")}}
 
 # Name of listener used for communication between brokers.
@@ -53,7 +55,8 @@ inter.broker.listener.name=PLAINTEXT
 
 # Listener name, hostname and port the broker or the controller will advertise to clients.
 # If not set, it uses the value for "listeners".
-#advertised.listeners=PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093
+#advertised.listeners=PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093 --> broker + controller
+#advertised.listeners=PLAINTEXT://localhost:9092 --> broker only
 advertised.listeners={{ kafka_advertised_listeners | join(",")}}
 
 # A comma-separated list of the names of the listeners used by the controller.
@@ -79,7 +82,9 @@ socket.receive.buffer.bytes={{ kafka_socket_receive_buffer_bytes }}
 # The maximum size of a request that the socket server will accept (protection against OOM)
 socket.request.max.bytes={{ kafka_socket_request_max_bytes }}
 
+
 ############################# Log Basics #############################
+
 
 # A comma separated list of directories under which to store log files
 log.dirs={{ kafka_data_log_dirs }}
@@ -97,11 +102,15 @@ num.recovery.threads.per.data.dir={{ kafka_num_recovery_threads_per_data_dir }}
 log.cleaner.threads={{ kafka_log_cleaner_threads }}
 
 ############################# Internal Topic Settings  #############################
-# The replication factor for the group metadata internal topics "__consumer_offsets" and "__transaction_state"
-# For anything other than development testing, a value greater than 1 is recommended for to ensure availability such as 3.
+# The replication factor for the group metadata internal topics "__consumer_offsets", "__share_group_state" and "__transaction_state"
+# For anything other than development testing, a value greater than 1 is recommended to ensure availability such as 3.
 offsets.topic.replication.factor={{ kafka_offsets_topic_replication_factor }}
 transaction.state.log.replication.factor={{ kafka_transaction_state_log_replication_factor }}
 transaction.state.log.min.isr={{ kafka_transaction_state_log_min_isr }}
+
+# Share state topic settings
+share.coordinator.state.topic.replication.factor=1
+share.coordinator.state.topic.min.isr=1
 
 ############################# Log Flush Policy #############################
 
@@ -145,47 +154,9 @@ log.retention.check.interval.ms={{ kafka_log_retention_check_interval_ms }}
 
 # Offset commit will be delayed until all replicas for the offsets topic receive the commit or this timeout is reached. This is similar to the producer request timeout.
 offsets.commit.timeout.ms={{ kafka_offsets_commit_timeout_ms }}
+
 # Max wait time for each fetcher request issued by follower replicas. This value should always be less than the replica.lag.time.max.ms at all times to prevent frequent shrinking of ISR for low throughput topics
 replica.fetch.wait.max.ms={{ kafka_replica_fetch_wait_max_ms }}
+
 # The amount of time to sleep when there are no logs to clean
 log.cleaner.backoff.ms={{ kafka_log_cleaner_backoff_ms }}
-
-############################# Group Coordinator Settings #############################
-
-# The following configuration specifies the time, in milliseconds, that the GroupCoordinator will delay the initial consumer rebalance.
-# The rebalance will be further delayed by the value of group.initial.rebalance.delay.ms as new members join the group, up to a maximum of max.poll.interval.ms.
-# The default value for this is 3 seconds.
-# We override this to 0 here as it makes for a better out-of-the-box experience for development and testing.
-# However, in production environments the default value of 3 seconds is more suitable as this will help to avoid unnecessary, and potentially expensive, rebalances during application startup.
-group.initial.rebalance.delay.ms={{ kafka_group_initial_rebalance_delay_ms }}
-
-{% if kafka_listener_auth is defined %}
-############################# AUTHENTICATION #############################
-  {% for type in kafka_listener_auth %}
-    {{ type.name }} required \
-  {% for user in type.users %}
-    user_{{ user.user }}="{{ user.pass }}" \
-  {% endfor %}
-    username="{{ type.username }}" \
-    password="{{ type.password }}";
-  {% endfor %}
-{% endif %}
-
-{% if kafka_sasl_enabled_mechanisms is defined %}
-sasl.enabled.mechanisms={{ kafka_sasl_enabled_mechanisms }}
-{% endif %}
-{% if kafka_ssl is defined %}
-ssl.cipher.suites={{ kafka_ssl.cipher_suites }}
-ssl.truststore.location={{ kafka_ssl.truststore_location }}
-ssl.truststore.password={{ kafka_ssl.truststore_password }}
-ssl.keystore.location={{ kafka_ssl.keystore_location }}
-ssl.keystore.password={{ kafka_ssl.keystore_password }}
-ssl.key.password={{ kafka_ssl.key_password }}
-ssl.client.auth={{ kafka_ssl.client_auth }}
-ssl.truststore.type={{ kafka_ssl.truststore_type | default('jks') }}
-ssl.keystore.type={{ kafka_ssl.keystore_type | default('jks') }}
-{% endif %}
-
-{% for key, value in (kafka_server_config_params | default({})).items() %}
-{{key}}={{value}}
-{% endfor %}

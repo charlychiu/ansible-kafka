@@ -89,9 +89,11 @@ kafka_java_home: ""
 #     listeners = PLAINTEXT://your.host.name:9092
 # listeners=PLAINTEXT://:9092
 # KRaft mode requires CONTROLLER listener in addition to broker listeners
-kafka_listeners:
-  - "PLAINTEXT://:9092"
-  - "CONTROLLER://:9093"
+# By default, listeners are automatically configured based on kafka_process_roles:
+#   - broker role: PLAINTEXT://:9092
+#   - controller role: CONTROLLER://:9093 (added automatically if 'controller' in process.roles)
+# You can override this by explicitly setting kafka_listeners (e.g., for custom ports or security protocols)
+kafka_listeners: []
 
 # Controller listener name (required for KRaft mode)
 kafka_controller_listener_names: "CONTROLLER"
@@ -100,9 +102,14 @@ kafka_controller_listener_names: "CONTROLLER"
 # it uses the value for "listeners" if configured.  Otherwise, it will use the value
 # returned from java.net.InetAddress.getCanonicalHostName().
 # advertised.listeners=PLAINTEXT://your.host.name:9092
+# By default, advertised listeners are automatically configured based on kafka_process_roles:
+#   - broker role: PLAINTEXT://<hostname>:9092
+#   - controller role: CONTROLLER://<hostname>:9093 (added automatically if 'controller' in process.roles)
+# You can override this by explicitly setting kafka_advertised_listeners
 # kafka_advertised_listeners:
 #   - "SASL_SSL://:9094"
 #   - "PLAINTEXT://:9092"
+kafka_advertised_listeners: []
 
 # The number of threads handling network requests
 kafka_num_network_threads: 3
@@ -161,8 +168,6 @@ kafka_delete_topic_enable: true
 # Default replication factor for automatically created topics.
 kafka_default_replication_factor: 1
 
-kafka_group_initial_rebalance_delay_ms: 0
-
 ############################# Timeout #############################
 
 # Offset commit will be delayed until all replicas for the offsets topic receive the commit or this timeout is reached. This is similar to the producer request timeout.
@@ -203,28 +208,3 @@ kafka_producer_compression_type: none
 
 kafka_consumer_group_id: kafka-consumer-group
 kafka_consumer_bootstrap_servers: "localhost:9092"
-
-# Example authentication
-############################# AUTHENTICATION #############################
-# kafka_listener_auth:
-#   - name: "listener.name.sasl_ssl.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule"
-#     username: "admin"
-#     password: "admin-secret"
-#     users:
-#       - user: "test1"
-#         pass: "test1-secret"
-#       - user: "test2"
-#         pass: "test2-secret"
-#
-# kafka_sasl_enabled_mechanisms: "PLAIN"
-# kafka_ssl:
-#   cipher_suites: "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384"
-#   truststore_location: "/etc/security/broker.keystore.jks"
-#   truststore_password: "secret"
-#   keystore_location: "/etc/security/broker.keystore.jks"
-#   keystore_password: "secret"
-#   key_password: "secret"
-#   client_auth: "required"
-
-# Here you can define custom opts e.g. settings for JMX Exporter
-# kafka_opts: ""

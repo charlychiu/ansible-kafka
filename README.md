@@ -37,7 +37,7 @@ update the relevant configuration files before running this role.
 
 ## Requirements
 
-- Java 11 or higher (Java 17 recommended)
+- Java 17 or higher (required)
 - Kafka 4.0+ runs in KRaft mode (no ZooKeeper required)
 
 Ansible 2.9.16 or 2.10.4 are the minimum required versions to workaround an

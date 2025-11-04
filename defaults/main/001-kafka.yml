@@ -45,18 +45,29 @@ kafka_controller_quorum_voters: "1@localhost:9093"
 kafka_controller_quorum_bootstrap_servers: ""
 
 # KRaft storage format mode for kafka-storage.sh format command (Kafka 4.x+)
+#
+# Two approaches for dynamic quorum setup:
+#
+# Approach A - Incremental (Recommended):
+#   First node:  kafka_storage_format_mode: "standalone"
+#   Other nodes: kafka_storage_format_mode: "no-initial-controllers"
+#
+# Approach B - All-at-once:
+#   All initial nodes: kafka_storage_format_mode: "initial-controllers"
+#                     (All nodes must use identical kafka_initial_controllers list)
+#
 # Options:
-#   "initial-controllers" - Use --initial-controllers flag for dynamic quorum (first node in cluster)
-#   "no-initial-controllers" - Use --no-initial-controllers flag (additional nodes joining cluster)
-#   "standalone" - Use --standalone flag for single-node dynamic quorum
-#   "" (empty) - Use default behavior (static quorum with controller.quorum.voters)
+#   "standalone"            - First node only (Approach A), creates single-voter cluster
+#   "initial-controllers"   - All initial nodes (Approach B), requires kafka_initial_controllers
+#   "no-initial-controllers" - Nodes joining existing cluster (both approaches)
+#   "" (empty)              - Default static quorum (uses controller.quorum.voters)
 kafka_storage_format_mode: ""
 
-# Initial controllers list for dynamic quorum topology (used when kafka_storage_format_mode="initial-controllers")
-# Format: id@hostname:port:directory,id@hostname:port:directory,...
+# Initial controllers list for Approach B (all initial nodes use IDENTICAL value)
+# Only used when kafka_storage_format_mode="initial-controllers"
+# Format: id@hostname:port:directory_uuid,id@hostname:port:directory_uuid,...
 # Example: "1@kafka-1:9093:MvDxzVmcRsaTz33bUuRU6A,2@kafka-2:9093:07R5amHmR32VDA6jHkGbTA,3@kafka-3:9093:JEXY6aqzQY-32P5TStzaFg"
-# Note: The directory UUID can be obtained by running kafka-storage.sh random-uuid
-# The same values must be used to format all nodes in the initial controller set
+# Note: Directory UUIDs obtained by running: kafka-storage.sh random-uuid
 kafka_initial_controllers: ""
 
 # Optional: Pre-defined cluster UUID (if not set, a random UUID will be generated)

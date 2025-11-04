@@ -103,30 +103,42 @@ Kafka 4.x introduces **dynamic quorum** functionality for KRaft mode:
 - Requires special format flags when initializing storage
 
 Format modes for dynamic quorum:
-1. **`--initial-controllers`**: Used for the first set of nodes when creating a new cluster
+
+1. **`--standalone`**: Single-node bootstrap (Approach A)
+   - Set `kafka_storage_format_mode: "standalone"`
+   - Use **only on the first node** to create initial single-voter cluster
+   - Other nodes join later using `--no-initial-controllers`
+   - Recommended for incremental cluster building
+
+2. **`--initial-controllers`**: Multi-node simultaneous bootstrap (Approach B)
    - Set `kafka_storage_format_mode: "initial-controllers"`
    - Requires `kafka_initial_controllers` list (format: `id@host:port:directory_uuid`)
-   - All initial nodes must be formatted with the same initial controllers list
-   - Example: `"1@kafka-1:9093:MvDxzVmcRsaTz33bUuRU6A,2@kafka-2:9093:07R5amHmR32VDA6jHkGbTA"`
+   - **All initial nodes must use identical initial controllers list**
+   - All nodes become voters immediately upon startup
+   - Example: `"1@kafka-1:9093:uuid1,2@kafka-2:9093:uuid2,3@kafka-3:9093:uuid3"`
 
-2. **`--no-initial-controllers`**: Used for nodes joining an existing dynamic quorum cluster
+3. **`--no-initial-controllers`**: Dynamic joining
    - Set `kafka_storage_format_mode: "no-initial-controllers"`
-   - Node joins using `controller.quorum.bootstrap.servers` configuration
-   - Must be added to quorum via admin operations after starting
+   - Used for nodes joining an **existing** dynamic quorum cluster
+   - Node starts as observer, discovers leader via `controller.quorum.bootstrap.servers`
+   - Promoted to voter using `AddVoter` RPC (manual operation required)
 
-3. **`--standalone`**: Used for single-node dynamic quorum (development/testing)
-   - Set `kafka_storage_format_mode: "standalone"`
-   - Creates a single-node controller quorum that can be expanded later
-
-**Example: Dynamic Quorum Setup**
+**Example: Approach A (Incremental - Recommended)**
 ```yaml
-# First 3 nodes (initial controllers)
-kafka_storage_format_mode: "initial-controllers"
-kafka_initial_controllers: "1@kafka-1:9093:uuid1,2@kafka-2:9093:uuid2,3@kafka-3:9093:uuid3"
+# First node only
+kafka_storage_format_mode: "standalone"
 kafka_controller_quorum_bootstrap_servers: "kafka-1:9093,kafka-2:9093,kafka-3:9093"
 
-# Additional nodes joining later
+# Second and third nodes (and any additional nodes)
 kafka_storage_format_mode: "no-initial-controllers"
+kafka_controller_quorum_bootstrap_servers: "kafka-1:9093,kafka-2:9093,kafka-3:9093"
+```
+
+**Example: Approach B (All-at-once)**
+```yaml
+# ALL initial nodes (1, 2, and 3) use IDENTICAL configuration
+kafka_storage_format_mode: "initial-controllers"
+kafka_initial_controllers: "1@kafka-1:9093:uuid1,2@kafka-2:9093:uuid2,3@kafka-3:9093:uuid3"
 kafka_controller_quorum_bootstrap_servers: "kafka-1:9093,kafka-2:9093,kafka-3:9093"
 ```
 

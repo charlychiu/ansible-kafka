@@ -65,10 +65,17 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_log_dir                                  | /var/log/kafka                       |                                                                  |
 | kafka_node_id                                  | 1                                    | Unique node ID for KRaft mode (replaces broker.id)              |
 | kafka_process_roles                            | broker,controller                    | Roles: broker, controller, or broker,controller                  |
-| kafka_controller_quorum_voters                 | 1@localhost:9093                     | Controller quorum voters for KRaft mode                          |
+| kafka_controller_quorum_voters                 | 1@localhost:9093                     | Controller quorum voters for KRaft mode (static quorum)          |
+| kafka_controller_quorum_bootstrap_servers      | ""                                   | Bootstrap servers for dynamic quorum (Kafka 4.x+)                |
 | kafka_controller_listener_names                | CONTROLLER                           | Controller listener name for KRaft mode                          |
+| kafka_cluster_uuid                             | ""                                   | Pre-defined cluster UUID (generated if not set)                  |
+| kafka_storage_format_mode                      | ""                                   | Format mode: initial-controllers, no-initial-controllers, standalone, or empty (static) |
+| kafka_initial_controllers                      | ""                                   | Initial controllers list for dynamic quorum (Approach B)         |
 | kafka_java_heap                                | -Xms1G -Xmx1G                        |                                                                  |
-| kafka_listeners                                | PLAINTEXT://:9092, CONTROLLER://:9093 | Broker and controller listeners                                  |
+| kafka_java_packages                            | []                                   | Java packages to install for Java 17+ requirement                |
+| kafka_java_home                                | ""                                   | Custom JAVA_HOME path                                            |
+| kafka_java_system_path                         | /usr/local/sbin:...:/bin             | System PATH for Java binaries                                    |
+| kafka_listeners                                | []                                   | Broker and controller listeners (auto-configured based on roles) |
 | kafka_num_network_threads                      | 3                                    |                                                                  |
 | kafka_num_io_threads                           | 8                                    |                                                                  |
 | kafka_num_replica_fetchers                     | 1                                    |                                                                  |
@@ -80,9 +87,9 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_num_partitions                           | 1                                    |                                                                  |
 | kafka_num_recovery_threads_per_data_dir        | 1                                    |                                                                  |
 | kafka_log_cleaner_threads                      | 1                                    |                                                                  |
-| kafka_offsets_topic_replication_factor         | 1                                    |                                                                  |
-| kafka_transaction_state_log_replication_factor | 1                                    |                                                                  |
-| kafka_transaction_state_log_min_isr            | 1                                    |                                                                  |
+| kafka_offsets_topic_replication_factor         | 3                                    | Replication factor for __consumer_offsets topic                  |
+| kafka_transaction_state_log_replication_factor | 3                                    | Replication factor for __transaction_state topic                 |
+| kafka_transaction_state_log_min_isr            | 2                                    | Min in-sync replicas for transaction state log                   |
 | kafka_log_retention_hours                      | 168                                  |                                                                  |
 | kafka_log_segment_bytes                        | 1073741824                           |                                                                  |
 | kafka_log_retention_check_interval_ms          | 300000                               |                                                                  |
@@ -110,16 +117,20 @@ Log4j2-related available variables. Note: Kafka 4.x uses Log4j2 exclusively.
 
 ## Default Properties
 
-| Property                       | Value                |
-| ------------------------------ | -------------------- |
-| Kafka node ID (KRaft)          | 1                    |
-| Process roles (KRaft)          | broker,controller    |
-| Kafka bootstrap servers        | localhost:9092       |
-| Kafka consumer group ID        | kafka-consumer-group |
-| Number of partitions           | 1                    |
-| Data log file retention period | 168 hours            |
-| Enable auto topic creation     | false                |
-| Enable topic deletion          | true                 |
+| Property                                | Value                |
+| --------------------------------------- | -------------------- |
+| Kafka node ID (KRaft)                   | 1                    |
+| Process roles (KRaft)                   | broker,controller    |
+| Kafka bootstrap servers                 | localhost:9092       |
+| Kafka consumer group ID                 | kafka-consumer-group |
+| Number of partitions                    | 1                    |
+| Data log file retention period          | 168 hours            |
+| Enable auto topic creation              | false                |
+| Enable topic deletion                   | true                 |
+| Offsets topic replication factor        | 3                    |
+| Transaction state log replication factor| 3                    |
+| Transaction state log min ISR           | 2                    |
+| Default replication factor              | 1                    |
 
 ### Ports
 

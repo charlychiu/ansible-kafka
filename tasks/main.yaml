@@ -323,47 +323,37 @@
   tags:
     - kafka_service
 
-- name: Check if KRaft cluster UUID file exists
+- name: Check if KRaft storage has been formatted
   ansible.builtin.stat:
-    path: '{{ kafka_dir }}/config/cluster-uuid.txt'
-  register: cluster_uuid_file
+    path: '{{ kafka_data_log_dirs.split(",")[0] }}/meta.properties'
+  register: kraft_meta_properties
   tags:
     - kafka_service
 
-- name: Generate KRaft cluster UUID
-  ansible.builtin.command: '{{ kafka_dir }}/bin/kafka-storage.sh random-uuid'
-  register: cluster_uuid
-  when: not cluster_uuid_file.stat.exists
-  changed_when: false
+- name: Set cluster UUID from variable or generate if not provided
+  ansible.builtin.set_fact:
+    kafka_cluster_uuid_final: >-
+      {{ kafka_cluster_uuid | default('') if (kafka_cluster_uuid | default('')) | length > 0
+         else lookup('pipe', kafka_dir ~ '/bin/kafka-storage.sh random-uuid') }}
+  when: not kraft_meta_properties.stat.exists
   environment: '{{ kafka_java_env | default({}) }}'
+  run_once: true
   tags:
     - kafka_service
 
-- name: Save cluster UUID to file
-  ansible.builtin.copy:
-    content: '{{ cluster_uuid.stdout }}'
-    dest: '{{ kafka_dir }}/config/cluster-uuid.txt'
-    owner: '{{ kafka_user }}'
-    group: '{{ kafka_group }}'
-    mode: '0644'
-  when: not cluster_uuid_file.stat.exists
-  tags:
-    - kafka_service
-
-- name: Read cluster UUID from file
-  ansible.builtin.slurp:
-    src: '{{ kafka_dir }}/config/cluster-uuid.txt'
-  register: cluster_uuid_content
-  when: cluster_uuid_file.stat.exists
+- name: Display cluster UUID being used
+  ansible.builtin.debug:
+    msg: "Using cluster UUID: {{ kafka_cluster_uuid_final }}"
+  when: not kraft_meta_properties.stat.exists
   tags:
     - kafka_service
 
 - name: Format KRaft storage
   ansible.builtin.command:
-    cmd: '{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ cluster_uuid.stdout if not cluster_uuid_file.stat.exists else (cluster_uuid_content.content | b64decode | trim) }} -c {{ kafka_dir }}/config/server.properties'
+    cmd: '{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ kafka_cluster_uuid_final }} -c {{ kafka_dir }}/config/server.properties'
   become: true
   become_user: '{{ kafka_user }}'
-  when: not cluster_uuid_file.stat.exists
+  when: not kraft_meta_properties.stat.exists
   changed_when: true
   environment: '{{ kafka_java_env | default({}) }}'
   tags:

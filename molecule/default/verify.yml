@@ -16,12 +16,12 @@
           - "'kafka' in getent_passwd"
           - "'kafka' in getent_group"
 
-    - name: Register '/opt/kafka_2.13-3.8.1' installation directory status
+    - name: Register '/opt/kafka_2.13-4.0.1' installation directory status
       ansible.builtin.stat:
-        path: '/opt/kafka_2.13-3.8.1'
+        path: '/opt/kafka_2.13-4.0.1'
       register: install_dir
 
-    - name: Assert that '/opt/kafka_2.13-3.8.1' directory is created
+    - name: Assert that '/opt/kafka_2.13-4.0.1' directory is created
       ansible.builtin.assert:
         that:
           - install_dir.stat.exists
@@ -39,7 +39,7 @@
         that:
           - kafka_dir.stat.exists
           - kafka_dir.stat.islnk
-          - kafka_dir.stat.lnk_target == '/opt/kafka_2.13-3.8.1'
+          - kafka_dir.stat.lnk_target == '/opt/kafka_2.13-4.0.1'
 
     - name: Register '/var/log/kafka' directory status
       ansible.builtin.stat:
@@ -80,6 +80,19 @@
           - config_dir.stat.isdir
           - config_dir.stat.pw_name == 'kafka'
           - config_dir.stat.gr_name == 'kafka'
+
+    - name: Register '/etc/kafka/log4j2.yaml' symlink status
+      ansible.builtin.stat:
+        path: '/etc/kafka/log4j2.yaml'
+      register: log4j2_config
+
+    - name: Assert that '/etc/kafka/log4j2.yaml' symlink exists
+      ansible.builtin.assert:
+        that:
+          - log4j2_config.stat.exists
+          - log4j2_config.stat.islnk
+          - log4j2_config.stat.pw_name == 'kafka'
+          - log4j2_config.stat.gr_name == 'kafka'
 
     - name: Populate service facts
       ansible.builtin.service_facts:

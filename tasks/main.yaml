@@ -8,6 +8,65 @@
   tags:
     - always
 
+- name: Ensure Java runtime packages are installed
+  ansible.builtin.package:
+    name: '{{ kafka_java_packages }}'
+    state: present
+  when: kafka_java_packages | length > 0
+  become: true
+  tags:
+    - kafka_java
+
+- name: Initialize Java environment overrides
+  ansible.builtin.set_fact:
+    kafka_java_env: {}
+  tags:
+    - kafka_java
+
+- name: Build Java environment overrides when JAVA_HOME is set
+  ansible.builtin.set_fact:
+    kafka_java_env:
+      JAVA_HOME: "{{ kafka_java_home }}"
+      PATH: "{{ kafka_java_home }}/bin:{{ ansible_env.PATH | default('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') }}"
+  when: kafka_java_home | default('') | length > 0
+  tags:
+    - kafka_java
+
+- name: Determine Java executable path
+  ansible.builtin.set_fact:
+    kafka_java_executable: >-
+      {{ (kafka_java_home | default('') | length > 0)
+         | ternary(kafka_java_home ~ '/bin/java', 'java') }}
+  tags:
+    - kafka_java
+
+- name: Capture Java version string
+  ansible.builtin.shell: |
+    {{ kafka_java_executable }} -version 2>&1 | awk -F '"' '/version/ {print $2; exit}'
+  args:
+    executable: /bin/bash
+  register: kafka_java_version
+  changed_when: false
+  failed_when: kafka_java_version.rc != 0
+  environment: '{{ kafka_java_env | default({}) }}'
+  tags:
+    - kafka_java
+
+- name: Cache Java version string
+  ansible.builtin.set_fact:
+    kafka_java_version_string: '{{ kafka_java_version.stdout | trim }}'
+  tags:
+    - kafka_java
+
+- name: Ensure Java 17 or newer is available
+  ansible.builtin.assert:
+    that:
+      - kafka_java_version_string | length > 0
+      - kafka_java_version_string is version('17', '>=')
+    fail_msg: 'Kafka requires Java 17 or newer. Detected version: {{ kafka_java_version_string | default("unknown") }}'
+  tags:
+    - kafka_java
+
 - name: Create kafka group
   ansible.builtin.group:
     name: '{{ kafka_group }}'
@@ -38,7 +97,7 @@
     url: '{{ kafka_download_base_url }}/{{ kafka_version }}/kafka_{{ kafka_scala_version }}-{{ kafka_version }}.tgz'
     dest: /tmp
     validate_certs: '{{ kafka_download_validate_certs }}'
-    mode: 0644
+    mode: '0644'
   when: not dir.stat.exists
   tags:
     - kafka_download
@@ -70,7 +129,7 @@
     state: directory
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0755
+    mode: '0755'
   with_items: "{{ kafka_data_log_dirs.split(',') }}"
   tags:
     - kafka_dirs
@@ -81,7 +140,7 @@
     state: directory
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0755
+    mode: '0755'
   tags:
     - kafka_dirs
 
@@ -99,7 +158,7 @@
     state: link
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0755
+    mode: '0755'
     follow: no
   when: not application_logs_dir.stat.exists
   tags:
@@ -111,9 +170,29 @@
     state: directory
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0755
+    mode: '0755'
   tags:
     - kafka_dirs
+
+- name: Set listeners based on process roles
+  ansible.builtin.set_fact:
+    kafka_listeners: >-
+      {{ kafka_listeners if kafka_listeners is defined and kafka_listeners | length > 0
+         else (['PLAINTEXT://:9092'] if 'broker' in kafka_process_roles else []) +
+              (['CONTROLLER://:9093'] if 'controller' in kafka_process_roles else []) }}
+  tags:
+    - kafka_config
+
+- name: Set advertised listeners based on process roles
+  ansible.builtin.set_fact:
+    kafka_advertised_listeners: >-
+      {{ kafka_advertised_listeners if kafka_advertised_listeners is defined and kafka_advertised_listeners | length > 0
+         else (['PLAINTEXT://' + (hostvars[inventory_hostname].advertised_hostname | default(ansible_host | default(inventory_hostname))) + ':9092']
+               if 'broker' in kafka_process_roles else []) +
+              (['CONTROLLER://' + (hostvars[inventory_hostname].advertised_hostname | default(ansible_host | default(inventory_hostname))) + ':9093']
+               if 'controller' in kafka_process_roles else []) }}
+  tags:
+    - kafka_config
 
 - name: Template configuration file to server.properties
   ansible.builtin.template:
@@ -121,19 +200,9 @@
     dest: '{{ kafka_dir }}/config/server.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   notify:
     - Restart kafka service
-  tags:
-    - kafka_config
-
-- name: Template configuration file to zookeeper.properties
-  ansible.builtin.template:
-    src: zookeeper.properties.j2
-    dest: '{{ kafka_dir }}/config/zookeeper.properties'
-    group: '{{ kafka_group }}'
-    owner: '{{ kafka_user }}'
-    mode: 0644
   tags:
     - kafka_config
 
@@ -143,7 +212,7 @@
     dest: '{{ kafka_dir }}/config/connect-standalone.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -153,7 +222,7 @@
     dest: '{{ kafka_dir }}/config/connect-distributed.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -163,7 +232,7 @@
     dest: '{{ kafka_dir }}/config/producer.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -173,17 +242,17 @@
     dest: '{{ kafka_dir }}/config/consumer.properties'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
-- name: Template configuration file to log4j.properties
+- name: Template configuration file to log4j2.yaml
   ansible.builtin.template:
-    src: log4j.properties.j2
-    dest: '{{ kafka_dir }}/config/log4j.properties'
+    src: log4j2.yaml.j2
+    dest: '{{ kafka_dir }}/config/log4j2.yaml'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   tags:
     - kafka_config
 
@@ -237,10 +306,10 @@
   tags:
     - kafka_config
 
-- name: Create symlink to kafka log4j properties file
+- name: Create symlink to kafka log4j2 configuration file
   ansible.builtin.file:
-    src: '{{ kafka_dir }}/config/log4j.properties'
-    dest: /etc/kafka/log4j.properties
+    src: '{{ kafka_dir }}/config/log4j2.yaml'
+    dest: /etc/kafka/log4j2.yaml
     state: link
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
@@ -253,7 +322,7 @@
     dest: /etc/init.d/kafka
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   notify:
     - Reload initd
     - Restart kafka service
@@ -267,10 +336,68 @@
     dest: '{{ kafka_unit_path }}'
     group: '{{ kafka_group }}'
     owner: '{{ kafka_user }}'
-    mode: 0644
+    mode: '0644'
   notify:
     - Restart kafka systemd
   when: ansible_os_family == "RedHat" and ansible_distribution_major_version > '6' or ansible_os_family == "Debian"
+  tags:
+    - kafka_service
+
+- name: Check if KRaft storage has been formatted
+  ansible.builtin.stat:
+    path: '{{ kafka_data_log_dirs.split(",")[0] }}/meta.properties'
+  register: kraft_meta_properties
+  tags:
+    - kafka_service
+
+- name: Set cluster UUID from variable or generate if not provided
+  ansible.builtin.set_fact:
+    kafka_cluster_uuid_final: >-
+      {{ kafka_cluster_uuid | default('') if (kafka_cluster_uuid | default('')) | length > 0
+         else lookup('pipe', kafka_dir ~ '/bin/kafka-storage.sh random-uuid') }}
+  when: not kraft_meta_properties.stat.exists
+  environment: '{{ kafka_java_env | default({}) }}'
+  run_once: true
+  tags:
+    - kafka_service
+
+- name: Display cluster UUID being used
+  ansible.builtin.debug:
+    msg: "Using cluster UUID: {{ kafka_cluster_uuid_final }}"
+  when: not kraft_meta_properties.stat.exists
+  tags:
+    - kafka_service
+
+- name: Set storage format flags based on mode
+  ansible.builtin.set_fact:
+    kafka_storage_format_flags: >-
+      {% if kafka_storage_format_mode == 'initial-controllers' %}
+      --initial-controllers {{ kafka_initial_controllers }}
+      {% elif kafka_storage_format_mode == 'no-initial-controllers' %}
+      --no-initial-controllers
+      {% elif kafka_storage_format_mode == 'standalone' %}
+      --standalone
+      {% else %}
+      {% endif %}
+  when: not kraft_meta_properties.stat.exists
+  tags:
+    - kafka_service
+
+- name: Display storage format mode
+  ansible.builtin.debug:
+    msg: "Storage format mode: {{ kafka_storage_format_mode | default('default (static quorum)') }}, flags: {{ kafka_storage_format_flags | default('none') }}"
+  when: not kraft_meta_properties.stat.exists
+  tags:
+    - kafka_service
+
+- name: Format KRaft storage
+  ansible.builtin.command:
+    cmd: '{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ kafka_cluster_uuid_final }} -c {{ kafka_dir }}/config/server.properties {{ kafka_storage_format_flags | default("") }}'
+  become: true
+  become_user: '{{ kafka_user }}'
+  when: not kraft_meta_properties.stat.exists
+  changed_when: true
+  environment: '{{ kafka_java_env | default({}) }}'
   tags:
     - kafka_service
 

@@ -2,7 +2,7 @@
 
 ![Lint Code Base] ![Molecule]
 
-Ansible role to install and configure [Apache Kafka] 3.8
+Ansible role to install and configure [Apache Kafka] 4.0
 
 [Apache Kafka] is a distributed event streaming platform using publish-subscribe
 topics. Applications and streaming components can produce and consume messages
@@ -17,35 +17,28 @@ This Ansible role does not handle the migration process of upgrading from older
 versions of Kafka. Please ensure that you read the upgrade documentation and
 update the relevant configuration files before running this role.
 
-<https://kafka.apache.org/35/documentation.html#upgrade>
+<https://kafka.apache.org/40/documentation.html#upgrade>
 
-For example, depending on how you upgrade, the `server.properties` file may need
-the following properties added to reflect your current version prior to running
-this Ansible playbook:
-
-- `inter.broker.protocol.version`
-- `log.message.format.version`
+**Important for Kafka 4.x:** 
+- **KRaft mode is required.** ZooKeeper is completely removed in Kafka 4.0. This role configures Kafka in KRaft mode only.
+- **Log4j2 is required.** The old Log4j 1.x configuration is no longer supported. This role automatically uses Log4j2 configuration.
+- If migrating from ZooKeeper-based Kafka (3.x or earlier), you must migrate to KRaft before upgrading to 4.0. See the [ZooKeeper to KRaft migration guide](https://kafka.apache.org/40/documentation/zk2kraft.html).
 
 ## Supported Platforms
 
-- RedHat 6
 - RedHat 7
 - RedHat 8
-- Debian 10.x
-- Ubuntu 18.04.x
-- Ubuntu 20.04.x
+- RedHat 9
+- Debian 10.x (Buster)
+- Debian 11.x (Bullseye)
+- Ubuntu 18.04.x (Bionic)
+- Ubuntu 20.04.x (Focal)
+- Ubuntu 22.04.x (Jammy)
 
 ## Requirements
 
-- [Apache ZooKeeper]
-- Java 8 (deprecated) / 11 / 17
-
-The below Apache ZooKeeper role from Ansible Galaxy can be used if one is
-needed.
-
-```sh
-ansible-galaxy install sleighzy.zookeeper
-```
+- Java 17 or higher (required)
+- Kafka 4.0+ runs in KRaft mode (no ZooKeeper required)
 
 Ansible 2.9.16 or 2.10.4 are the minimum required versions to workaround an
 issue with certain kernels that have broken the `systemd` status check. The
@@ -60,7 +53,7 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | ---------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------- |
 | kafka_download_base_url                        | <https://downloads.apache.org/kafka> |                                                                  |
 | kafka_download_validate_certs                  | yes                                  |                                                                  |
-| kafka_version                                  | 3.8.1                                |                                                                  |
+| kafka_version                                  | 4.0.1                                |                                                                  |
 | kafka_scala_version                            | 2.13                                 |                                                                  |
 | kafka_create_user_group                        | true                                 |                                                                  |
 | kafka_user                                     | kafka                                |                                                                  |
@@ -70,10 +63,19 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_start                                    | yes                                  |                                                                  |
 | kafka_restart                                  | yes                                  |                                                                  |
 | kafka_log_dir                                  | /var/log/kafka                       |                                                                  |
-| kafka_broker_id                                | 0                                    |                                                                  |
+| kafka_node_id                                  | 1                                    | Unique node ID for KRaft mode (replaces broker.id)              |
+| kafka_process_roles                            | broker,controller                    | Roles: broker, controller, or broker,controller                  |
+| kafka_controller_quorum_voters                 | 1@localhost:9093                     | Controller quorum voters for KRaft mode (static quorum)          |
+| kafka_controller_quorum_bootstrap_servers      | ""                                   | Bootstrap servers for dynamic quorum (Kafka 4.x+)                |
+| kafka_controller_listener_names                | CONTROLLER                           | Controller listener name for KRaft mode                          |
+| kafka_cluster_uuid                             | ""                                   | Pre-defined cluster UUID (generated if not set)                  |
+| kafka_storage_format_mode                      | ""                                   | Format mode: initial-controllers, no-initial-controllers, standalone, or empty (static) |
+| kafka_initial_controllers                      | ""                                   | Initial controllers list for dynamic quorum (Approach B)         |
 | kafka_java_heap                                | -Xms1G -Xmx1G                        |                                                                  |
-| kafka_background_threads                       | 10                                   |                                                                  |
-| kafka_listeners                                | PLAINTEXT://:9092                    |                                                                  |
+| kafka_java_packages                            | []                                   | Java packages to install for Java 17+ requirement                |
+| kafka_java_home                                | ""                                   | Custom JAVA_HOME path                                            |
+| kafka_java_system_path                         | /usr/local/sbin:...:/bin             | System PATH for Java binaries                                    |
+| kafka_listeners                                | []                                   | Broker and controller listeners (auto-configured based on roles) |
 | kafka_num_network_threads                      | 3                                    |                                                                  |
 | kafka_num_io_threads                           | 8                                    |                                                                  |
 | kafka_num_replica_fetchers                     | 1                                    |                                                                  |
@@ -85,24 +87,22 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_num_partitions                           | 1                                    |                                                                  |
 | kafka_num_recovery_threads_per_data_dir        | 1                                    |                                                                  |
 | kafka_log_cleaner_threads                      | 1                                    |                                                                  |
-| kafka_offsets_topic_replication_factor         | 1                                    |                                                                  |
-| kafka_transaction_state_log_replication_factor | 1                                    |                                                                  |
-| kafka_transaction_state_log_min_isr            | 1                                    |                                                                  |
+| kafka_offsets_topic_replication_factor         | 3                                    | Replication factor for __consumer_offsets topic                  |
+| kafka_transaction_state_log_replication_factor | 3                                    | Replication factor for __transaction_state topic                 |
+| kafka_transaction_state_log_min_isr            | 2                                    | Min in-sync replicas for transaction state log                   |
 | kafka_log_retention_hours                      | 168                                  |                                                                  |
 | kafka_log_segment_bytes                        | 1073741824                           |                                                                  |
 | kafka_log_retention_check_interval_ms          | 300000                               |                                                                  |
 | kafka_auto_create_topics_enable                | false                                |                                                                  |
 | kafka_delete_topic_enable                      | true                                 |                                                                  |
 | kafka_default_replication_factor               | 1                                    |                                                                  |
-| kafka_group_initial_rebalance_delay_ms         | 0                                    |                                                                  |
-| kafka_zookeeper_connect                        | localhost:2181                       |                                                                  |
-| kafka_zookeeper_connection_timeout             | 6000                                 |                                                                  |
 | kafka_bootstrap_servers                        | localhost:9092                       |                                                                  |
 | kafka_consumer_group_id                        | kafka-consumer-group                 |                                                                  |
+| kafka_opts                                     |                                      | Custom JVM options (e.g., for JMX Exporter)                      |
 | kafka_server_config_params                     |                                      | General dictionary that will be templated into server.properties |
 
 See [log4j.yml](./defaults/main/002-log4j.yml) for detailed  
-log4j-related available variables.
+Log4j2-related available variables. Note: Kafka 4.x uses Log4j2 exclusively.
 
 ## Starting and Stopping Kafka services using systemd
 
@@ -116,22 +116,31 @@ log4j-related available variables.
 
 ## Default Properties
 
-| Property                       | Value                |
-| ------------------------------ | -------------------- |
-| ZooKeeper connection           | localhost:2181       |
-| Kafka bootstrap servers        | localhost:9092       |
-| Kafka consumer group ID        | kafka-consumer-group |
-| Kafka broker ID                | 0                    |
-| Number of partitions           | 1                    |
-| Data log file retention period | 168 hours            |
-| Enable auto topic creation     | false                |
-| Enable topic deletion          | true                 |
+| Property                                | Value                |
+| --------------------------------------- | -------------------- |
+| Kafka node ID (KRaft)                   | 1                    |
+| Process roles (KRaft)                   | broker,controller    |
+| Kafka bootstrap servers                 | localhost:9092       |
+| Kafka consumer group ID                 | kafka-consumer-group |
+| Number of partitions                    | 1                    |
+| Data log file retention period          | 168 hours            |
+| Enable auto topic creation              | false                |
+| Enable topic deletion                   | true                 |
+| Offsets topic replication factor        | 3                    |
+| Transaction state log replication factor| 3                    |
+| Transaction state log min ISR           | 2                    |
+| Default replication factor              | 1                    |
 
 ### Ports
 
-| Port | Description         |
-| ---- | ------------------- |
-| 9092 | Kafka listener port |
+| Port | Description                  |
+| ---- | ---------------------------- |
+| 9092 | Kafka broker listener port   |
+| 9093 | Kafka controller listener port (KRaft) |
+| JMX  | JMX metrics (configurable)   |
+
+Note: JMX metrics are available by default for monitoring Kafka broker performance.
+Configure JMX port via `kafka_opts` variable if needed.
 
 ### Directories and Files
 
@@ -141,6 +150,7 @@ log4j-related available variables.
 | Kafka configuration directory (symlink to /opt/kafka/config) | `/etc/kafka`                            |
 | Directory to store data files                                | `/var/lib/kafka/logs`                   |
 | Directory to store logs files                                | `/var/log/kafka`                        |
+| Log4j2 configuration file                                    | `/etc/kafka/log4j2.yaml`                |
 | Kafka service                                                | `/usr/lib/systemd/system/kafka.service` |
 
 ## Example Playbook
@@ -153,6 +163,48 @@ Add the below to a playbook to run those role against hosts belonging to the
   roles:
     - sleighzy.kafka
 ```
+
+## Resetting / Cleaning Up Kafka Installation
+
+Two reset playbooks are provided to clean up Kafka installations:
+
+### reset-kafka.yml (Safe Reset)
+
+Stops the Kafka service and removes all Kafka files, but preserves the kafka user and group:
+
+```sh
+ansible-playbook -i inventory reset-kafka.yml
+```
+
+This playbook will:
+- Stop and disable the Kafka service
+- Remove all Kafka directories in `/opt/kafka*`
+- Remove `/var/lib/kafka` (data directory)
+- Remove `/var/log/kafka` (log directory)
+- Remove `/etc/kafka` (configuration directory)
+- **Keep** the kafka user and group
+
+### reset-kafka-with-user.yml (Complete Reset)
+
+Performs a complete cleanup including the kafka user and group:
+
+```sh
+ansible-playbook -i inventory reset-kafka-with-user.yml
+```
+
+This playbook includes a safety confirmation prompt. To skip the prompt:
+
+```sh
+ansible-playbook -i inventory reset-kafka-with-user.yml -e "confirm_reset=yes"
+```
+
+To target specific hosts:
+
+```sh
+ansible-playbook -i inventory reset-kafka.yml --limit kafka-node-1
+```
+
+**WARNING:** These operations are destructive and will permanently delete all Kafka data. Use with caution!
 
 ## Linting
 
@@ -167,7 +219,7 @@ ansible-lint -c ./.ansible-lint .
 ## Testing
 
 This module uses the [Ansible Molecule] testing framework. This test suite
-creates a Kafka and ZooKeeper cluster consisting of three nodes running within
+creates a Kafka cluster consisting of three nodes running in KRaft mode within
 Docker containers. Each container runs a different OS to test the supported
 platforms for this Ansible role.
 
@@ -219,7 +271,6 @@ molecule destroy
 [ansible-lint]: https://docs.ansible.com/ansible-lint/
 [ansible molecule]: https://molecule.readthedocs.io/
 [apache kafka]: http://kafka.apache.org/
-[apache zookeeper]: https://zookeeper.apache.org/
 [lint code base]:
   https://github.com/sleighzy/ansible-kafka/workflows/Lint%20Code%20Base/badge.svg
 [molecule]:

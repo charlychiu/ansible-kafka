@@ -4,24 +4,21 @@
   gather_facts: true
 
   pre_tasks:
-    - name: Install Java 8 (OpenJDK) on RedHat/CentOS
+    - name: Install Java 17 (OpenJDK) on RedHat/CentOS
       ansible.builtin.yum:
-        name: java-1.8.0-openjdk
+        name: java-17-openjdk
         state: installed
       when: ansible_os_family == "RedHat"
 
-    - name: Install Java 11 (OpenJDK) on Debian
+    - name: Install Java 17 (OpenJDK) on Debian
       ansible.builtin.apt:
-        name: openjdk-11-jdk
+        name: openjdk-17-jdk
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
 
     # The installation of this package into the container means
     # that the "ps" command is available for viewing the running process.
-    # Installing this package however also prevents an issue whereby the
-    # ZooKeeper service is constantly restarted by systemd which causes
-    # the Molecule tests to fail as the service is not started correctly.
     - name: Install ps on Debian
       ansible.builtin.apt:
         name: procps
@@ -33,3 +30,14 @@
         name: procps
         state: present
       when: ansible_os_family == "RedHat"
+
+    # Format storage for KRaft metadata
+    - name: Create metadata directory
+      ansible.builtin.file:
+        path: /var/lib/kafka/kraft-metadata
+        state: directory
+        owner: kafka
+        group: kafka
+        mode: '0755'
+      become: yes
+      ignore_errors: yes

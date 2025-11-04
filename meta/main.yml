@@ -3,22 +3,24 @@ galaxy_info:
   author: Simon Leigh
   namespace: sleighzy
   role_name: kafka
-  description: Apache Kafka installation for RHEL/CentOS and Debian/Ubuntu
+  description: Apache Kafka 4.0 installation for RHEL/CentOS and Debian/Ubuntu
   license: MIT
   min_ansible_version: 2.10.4
   platforms:
     - name: EL
       versions:
-        - '6'
         - '7'
         - '8'
+        - '9'
     - name: Debian
       versions:
         - buster
+        - bullseye
     - name: Ubuntu
       versions:
         - bionic
         - focal
+        - jammy
   galaxy_tags:
     - clustering
     - kafka

@@ -7,11 +7,11 @@
   ansible.builtin.service:
     name: kafka
     state: restarted
-  when: kafka_restart
+  when: kafka_restart | default(true) | bool
 
 - name: Restart kafka systemd
   ansible.builtin.systemd:
     name: kafka
     state: restarted
     daemon_reload: yes
-  when: kafka_restart
+  when: kafka_restart | default(true) | bool

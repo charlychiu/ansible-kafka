@@ -36,7 +36,32 @@ kafka_process_roles: "broker,controller"
 # Controller quorum voter list: id@host:port,id@host:port,...
 # Example for 3-node cluster: "1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093"
 # For single-node development: "1@localhost:9093"
+# Note: This can be omitted when using controller.quorum.bootstrap.servers
 kafka_controller_quorum_voters: "1@localhost:9093"
+
+# Controller quorum bootstrap servers for dynamic quorum (Kafka 4.x+)
+# Example: "kafka-1:9093,kafka-2:9093,kafka-3:9093"
+# This is used with --initial-controllers for dynamic quorum setup
+kafka_controller_quorum_bootstrap_servers: ""
+
+# KRaft storage format mode for kafka-storage.sh format command (Kafka 4.x+)
+# Options:
+#   "initial-controllers" - Use --initial-controllers flag for dynamic quorum (first node in cluster)
+#   "no-initial-controllers" - Use --no-initial-controllers flag (additional nodes joining cluster)
+#   "standalone" - Use --standalone flag for single-node dynamic quorum
+#   "" (empty) - Use default behavior (static quorum with controller.quorum.voters)
+kafka_storage_format_mode: ""
+
+# Initial controllers list for dynamic quorum topology (used when kafka_storage_format_mode="initial-controllers")
+# Format: id@hostname:port:directory,id@hostname:port:directory,...
+# Example: "1@kafka-1:9093:MvDxzVmcRsaTz33bUuRU6A,2@kafka-2:9093:07R5amHmR32VDA6jHkGbTA,3@kafka-3:9093:JEXY6aqzQY-32P5TStzaFg"
+# Note: The directory UUID can be obtained by running kafka-storage.sh random-uuid
+# The same values must be used to format all nodes in the initial controller set
+kafka_initial_controllers: ""
+
+# Optional: Pre-defined cluster UUID (if not set, a random UUID will be generated)
+# This should be the same across all nodes in the cluster
+kafka_cluster_uuid: ""
 
 # The Java heap size (memory) allocation (xmx, xms)
 kafka_java_heap: "-Xms1G -Xmx1G"

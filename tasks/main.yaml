@@ -348,9 +348,31 @@
   tags:
     - kafka_service
 
+- name: Set storage format flags based on mode
+  ansible.builtin.set_fact:
+    kafka_storage_format_flags: >-
+      {% if kafka_storage_format_mode == 'initial-controllers' %}
+      --initial-controllers {{ kafka_initial_controllers }}
+      {% elif kafka_storage_format_mode == 'no-initial-controllers' %}
+      --no-initial-controllers
+      {% elif kafka_storage_format_mode == 'standalone' %}
+      --standalone
+      {% else %}
+      {% endif %}
+  when: not kraft_meta_properties.stat.exists
+  tags:
+    - kafka_service
+
+- name: Display storage format mode
+  ansible.builtin.debug:
+    msg: "Storage format mode: {{ kafka_storage_format_mode | default('default (static quorum)') }}, flags: {{ kafka_storage_format_flags | default('none') }}"
+  when: not kraft_meta_properties.stat.exists
+  tags:
+    - kafka_service
+
 - name: Format KRaft storage
   ansible.builtin.command:
-    cmd: '{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ kafka_cluster_uuid_final }} -c {{ kafka_dir }}/config/server.properties'
+    cmd: '{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ kafka_cluster_uuid_final }} -c {{ kafka_dir }}/config/server.properties {{ kafka_storage_format_flags | default("") }}'
   become: true
   become_user: '{{ kafka_user }}'
   when: not kraft_meta_properties.stat.exists

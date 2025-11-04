@@ -85,7 +85,50 @@ Kafka 4.x uses KRaft (Kafka Raft) consensus protocol instead of ZooKeeper:
 - **Listeners**: Requires separate `CONTROLLER` listener (typically port 9093) in addition to `PLAINTEXT` listener (port 9092)
 - **Storage Format**: Before first start, storage must be formatted with `kafka-storage.sh format` using a cluster UUID
 
-The role automatically handles cluster UUID generation and storage formatting (tasks/main.yaml:267-309).
+The role automatically handles cluster UUID generation and storage formatting (tasks/main.yaml:326-383).
+
+#### Dynamic Quorum vs Static Quorum (Kafka 4.x+)
+
+Kafka 4.x introduces **dynamic quorum** functionality for KRaft mode:
+
+**Static Quorum (Default)**
+- Controller quorum is defined in `controller.quorum.voters` configuration
+- All controller nodes must be known at format time
+- Use this for traditional fixed-topology clusters
+- Set `kafka_storage_format_mode: ""` (empty/default)
+
+**Dynamic Quorum (Kafka 4.x+)**
+- Controllers can be added/removed dynamically after cluster is running
+- Uses `controller.quorum.bootstrap.servers` for controller discovery
+- Requires special format flags when initializing storage
+
+Format modes for dynamic quorum:
+1. **`--initial-controllers`**: Used for the first set of nodes when creating a new cluster
+   - Set `kafka_storage_format_mode: "initial-controllers"`
+   - Requires `kafka_initial_controllers` list (format: `id@host:port:directory_uuid`)
+   - All initial nodes must be formatted with the same initial controllers list
+   - Example: `"1@kafka-1:9093:MvDxzVmcRsaTz33bUuRU6A,2@kafka-2:9093:07R5amHmR32VDA6jHkGbTA"`
+
+2. **`--no-initial-controllers`**: Used for nodes joining an existing dynamic quorum cluster
+   - Set `kafka_storage_format_mode: "no-initial-controllers"`
+   - Node joins using `controller.quorum.bootstrap.servers` configuration
+   - Must be added to quorum via admin operations after starting
+
+3. **`--standalone`**: Used for single-node dynamic quorum (development/testing)
+   - Set `kafka_storage_format_mode: "standalone"`
+   - Creates a single-node controller quorum that can be expanded later
+
+**Example: Dynamic Quorum Setup**
+```yaml
+# First 3 nodes (initial controllers)
+kafka_storage_format_mode: "initial-controllers"
+kafka_initial_controllers: "1@kafka-1:9093:uuid1,2@kafka-2:9093:uuid2,3@kafka-3:9093:uuid3"
+kafka_controller_quorum_bootstrap_servers: "kafka-1:9093,kafka-2:9093,kafka-3:9093"
+
+# Additional nodes joining later
+kafka_storage_format_mode: "no-initial-controllers"
+kafka_controller_quorum_bootstrap_servers: "kafka-1:9093,kafka-2:9093,kafka-3:9093"
+```
 
 ### Configuration Templates
 
@@ -147,8 +190,14 @@ The verify stage (`molecule/default/verify.yml`) validates:
 **KRaft Configuration:**
 - `kafka_node_id: 1` - Unique node ID (must be different per node in cluster)
 - `kafka_process_roles: "broker,controller"` - Server roles (broker, controller, or both)
-- `kafka_controller_quorum_voters: "1@localhost:9093"` - Controller quorum voter list
+- `kafka_controller_quorum_voters: "1@localhost:9093"` - Controller quorum voter list (static quorum)
+- `kafka_controller_quorum_bootstrap_servers: ""` - Bootstrap servers for dynamic quorum (Kafka 4.x+)
 - `kafka_controller_listener_names: "CONTROLLER"` - Controller listener name
+- `kafka_cluster_uuid: ""` - Pre-defined cluster UUID (if not set, randomly generated)
+
+**KRaft Storage Format (Kafka 4.x Dynamic Quorum):**
+- `kafka_storage_format_mode: ""` - Format mode: `initial-controllers`, `no-initial-controllers`, `standalone`, or empty (default)
+- `kafka_initial_controllers: ""` - Initial controllers list for dynamic quorum (format: `id@host:port:directory_uuid`)
 
 **Network:**
 - `kafka_listeners: ["PLAINTEXT://:9092", "CONTROLLER://:9093"]` - Listener configuration

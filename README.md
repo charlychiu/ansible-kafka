@@ -140,7 +140,7 @@ Configure JMX port via `kafka_opts` variable if needed.
 | Kafka configuration directory (symlink to /opt/kafka/config) | `/etc/kafka`                            |
 | Directory to store data files                                | `/var/lib/kafka/logs`                   |
 | Directory to store logs files                                | `/var/log/kafka`                        |
-| Log4j2 configuration file                                    | `/etc/kafka/log4j2.xml`                 |
+| Log4j2 configuration file                                    | `/etc/kafka/log4j2.yaml`                |
 | Kafka service                                                | `/usr/lib/systemd/system/kafka.service` |
 
 ## Example Playbook

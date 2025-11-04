@@ -69,7 +69,7 @@ The main task file (`tasks/main.yaml`) executes in this order:
 1. **User/Group Creation** (lines 11-29): Creates kafka user/group if `kafka_create_user_group` is true
 2. **Download & Install** (lines 31-56): Downloads Kafka tarball, unpacks to `/opt/kafka_<version>`, creates symlink at `/opt/kafka`
 3. **Directory Setup** (lines 57-116): Creates data dirs (`/var/lib/kafka/logs`), log dirs (`/var/log/kafka`), config symlinks (`/etc/kafka`)
-4. **Configuration** (lines 118-238): Templates all `.properties` files and `log4j2.xml` to `/opt/kafka/config/`, creates symlinks in `/etc/kafka`
+4. **Configuration** (lines 118-238): Templates all `.properties` files and `log4j2.yaml` to `/opt/kafka/config/`, creates symlinks in `/etc/kafka`
 5. **Service Setup** (lines 240-266): Installs systemd service or initd script depending on OS
 6. **KRaft Storage Initialization** (lines 267-309): Generates cluster UUID, formats KRaft storage using `kafka-storage.sh`
 7. **Service Start** (lines 311-318): Starts and enables kafka service if `kafka_start: yes`
@@ -148,7 +148,7 @@ The role templates these Kafka configuration files:
 - `server.properties` - Main broker configuration (KRaft-specific with `node.id`, `process.roles`, `controller.quorum.voters`)
 - `connect-standalone.properties` / `connect-distributed.properties` - Kafka Connect
 - `producer.properties` / `consumer.properties` - Client configs
-- `log4j2.xml` - Log4j2 configuration (required for Kafka 4.x)
+- `log4j2.yaml` - Log4j2 configuration (required for Kafka 4.x)
 
 Note: `zookeeper.properties` is no longer included as ZooKeeper is removed in Kafka 4.0.
 

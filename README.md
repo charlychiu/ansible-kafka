@@ -96,7 +96,6 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_auto_create_topics_enable                | false                                |                                                                  |
 | kafka_delete_topic_enable                      | true                                 |                                                                  |
 | kafka_default_replication_factor               | 1                                    |                                                                  |
-| kafka_group_initial_rebalance_delay_ms         | 0                                    |                                                                  |
 | kafka_bootstrap_servers                        | localhost:9092                       |                                                                  |
 | kafka_consumer_group_id                        | kafka-consumer-group                 |                                                                  |
 | kafka_opts                                     |                                      | Custom JVM options (e.g., for JMX Exporter)                      |

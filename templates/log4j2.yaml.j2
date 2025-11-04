@@ -37,7 +37,7 @@ Configuration:
     RollingFile:
       - name: KafkaAppender
         fileName: "${sys:kafka.logs.dir}/server.log"
-        filePattern: "${sys:kafka.logs.dir}/server.log.%d{{{ log4j2_file_pattern_date }}}"
+        filePattern: "${sys:kafka.logs.dir}/server.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
         TimeBasedTriggeringPolicy:
@@ -46,7 +46,7 @@ Configuration:
       # State Change appender
       - name: StateChangeAppender
         fileName: "${sys:kafka.logs.dir}/state-change.log"
-        filePattern: "${sys:kafka.logs.dir}/state-change.log.%d{{{ log4j2_file_pattern_date }}}"
+        filePattern: "${sys:kafka.logs.dir}/state-change.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
         TimeBasedTriggeringPolicy:
@@ -55,7 +55,7 @@ Configuration:
       # Request appender
       - name: RequestAppender
         fileName: "${sys:kafka.logs.dir}/kafka-request.log"
-        filePattern: "${sys:kafka.logs.dir}/kafka-request.log.%d{{{ log4j2_file_pattern_date }}}"
+        filePattern: "${sys:kafka.logs.dir}/kafka-request.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
         TimeBasedTriggeringPolicy:
@@ -64,7 +64,7 @@ Configuration:
       # Cleaner appender
       - name: CleanerAppender
         fileName: "${sys:kafka.logs.dir}/log-cleaner.log"
-        filePattern: "${sys:kafka.logs.dir}/log-cleaner.log.%d{{{ log4j2_file_pattern_date }}}"
+        filePattern: "${sys:kafka.logs.dir}/log-cleaner.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
         TimeBasedTriggeringPolicy:
@@ -73,7 +73,7 @@ Configuration:
       # Controller appender
       - name: ControllerAppender
         fileName: "${sys:kafka.logs.dir}/controller.log"
-        filePattern: "${sys:kafka.logs.dir}/controller.log.%d{{{ log4j2_file_pattern_date }}}"
+        filePattern: "${sys:kafka.logs.dir}/controller.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
         TimeBasedTriggeringPolicy:
@@ -82,7 +82,7 @@ Configuration:
       # Authorizer appender
       - name: AuthorizerAppender
         fileName: "${sys:kafka.logs.dir}/kafka-authorizer.log"
-        filePattern: "${sys:kafka.logs.dir}/kafka-authorizer.log.%d{{{ log4j2_file_pattern_date }}}"
+        filePattern: "${sys:kafka.logs.dir}/kafka-authorizer.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
         TimeBasedTriggeringPolicy:

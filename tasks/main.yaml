@@ -316,6 +316,41 @@
   tags:
     - kafka_config
 
+- name: Create JMX Exporter directory
+  ansible.builtin.file:
+    path: '{{ kafka_jmx_exporter_dir }}'
+    state: directory
+    group: '{{ kafka_group }}'
+    owner: '{{ kafka_user }}'
+    mode: '0755'
+  when: kafka_jmx_exporter_enabled | bool
+  tags:
+    - kafka_jmx_exporter
+
+- name: Download JMX Exporter JAR
+  ansible.builtin.get_url:
+    url: '{{ kafka_jmx_exporter_url }}'
+    dest: '{{ kafka_jmx_exporter_jar }}'
+    group: '{{ kafka_group }}'
+    owner: '{{ kafka_user }}'
+    mode: '0644'
+  when: kafka_jmx_exporter_enabled | bool
+  tags:
+    - kafka_jmx_exporter
+
+- name: Template JMX Exporter configuration file
+  ansible.builtin.template:
+    src: kafka-jmx-exporter.yml.j2
+    dest: '{{ kafka_jmx_exporter_config }}'
+    group: '{{ kafka_group }}'
+    owner: '{{ kafka_user }}'
+    mode: '0644'
+  when: kafka_jmx_exporter_enabled | bool
+  notify:
+    - Restart kafka service
+  tags:
+    - kafka_jmx_exporter
+
 - name: Template Kafka init.d service file
   ansible.builtin.template:
     src: kafka.initd.j2

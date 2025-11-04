@@ -13,7 +13,9 @@ Environment="LOG_DIR={{ kafka_log_dir }}"
 Environment="JAVA_HOME={{ kafka_java_home }}"
 Environment="PATH={{ kafka_java_home }}/bin:{{ kafka_java_system_path | default('/usr/bin:/bin') }}"
 {% endif %}
-{% if kafka_opts is defined %}
+{% if kafka_jmx_exporter_enabled %}
+Environment="KAFKA_OPTS=-javaagent:{{ kafka_jmx_exporter_jar }}={{ kafka_jmx_exporter_port }}:{{ kafka_jmx_exporter_config }}{% if kafka_opts is defined %} {{ kafka_opts }}{% endif %}"
+{% elif kafka_opts is defined %}
 Environment="KAFKA_OPTS={{ kafka_opts }}"
 {% endif %}
 {% if kafka_extra_args is defined %}

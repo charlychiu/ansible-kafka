@@ -209,3 +209,26 @@ kafka_producer_compression_type: none
 
 kafka_consumer_group_id: kafka-consumer-group
 kafka_consumer_bootstrap_servers: "localhost:9092"
+
+############################# JMX Exporter for Prometheus #############################
+
+# Enable JMX Exporter for Prometheus monitoring
+kafka_jmx_exporter_enabled: false
+
+# JMX Exporter version to download
+kafka_jmx_exporter_version: 1.0.1
+
+# JMX Exporter download URL
+kafka_jmx_exporter_url: "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/{{ kafka_jmx_exporter_version }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar"
+
+# JMX Exporter port for Prometheus metrics scraping
+kafka_jmx_exporter_port: 7071
+
+# JMX Exporter installation directory
+kafka_jmx_exporter_dir: "{{ kafka_dir }}/jmx_exporter"
+
+# JMX Exporter jar file path
+kafka_jmx_exporter_jar: "{{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar"
+
+# JMX Exporter configuration file path
+kafka_jmx_exporter_config: "{{ kafka_jmx_exporter_dir }}/kafka-jmx-exporter.yml"

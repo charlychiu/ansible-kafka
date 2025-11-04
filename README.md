@@ -101,7 +101,41 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 | kafka_opts                                     |                                      | Custom JVM options (e.g., for JMX Exporter)                      |
 | kafka_server_config_params                     |                                      | General dictionary that will be templated into server.properties |
 
-See [log4j.yml](./defaults/main/002-log4j.yml) for detailed  
+### JMX Exporter for Prometheus
+
+This role includes support for [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter), which exposes Kafka JMX metrics in Prometheus format for monitoring.
+
+| Variable                      | Default                            | Comments                                                         |
+| ----------------------------- | ---------------------------------- | ---------------------------------------------------------------- |
+| kafka_jmx_exporter_enabled    | false                              | Enable JMX Exporter for Prometheus monitoring                    |
+| kafka_jmx_exporter_version    | 1.0.1                              | JMX Exporter version to download                                 |
+| kafka_jmx_exporter_port       | 7071                               | Port for Prometheus to scrape metrics                            |
+| kafka_jmx_exporter_dir        | {{ kafka_dir }}/jmx_exporter       | JMX Exporter installation directory                              |
+| kafka_jmx_exporter_jar        | {{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar | JMX Exporter jar file path |
+| kafka_jmx_exporter_config     | {{ kafka_jmx_exporter_dir }}/kafka-jmx-exporter.yml | JMX Exporter configuration file path |
+| kafka_jmx_exporter_url        | https://repo1.maven.org/maven2/... | Download URL for JMX Exporter jar                                |
+
+**Example usage:**
+
+```yaml
+- hosts: kafka-nodes
+  roles:
+    - sleighzy.kafka
+  vars:
+    kafka_jmx_exporter_enabled: true
+    kafka_jmx_exporter_port: 7071
+```
+
+Once enabled, Prometheus can scrape metrics from `http://<kafka-host>:7071/metrics`.
+
+The role includes a comprehensive JMX Exporter configuration that exposes:
+- Kafka broker metrics (topics, partitions, replication)
+- Network request metrics
+- Controller metrics
+- Log metrics
+- JVM metrics (memory, GC, threads)
+
+See [log4j.yml](./defaults/main/002-log4j.yml) for detailed
 Log4j2-related available variables. Note: Kafka 4.x uses Log4j2 exclusively.
 
 ## Starting and Stopping Kafka services using systemd
@@ -137,10 +171,12 @@ Log4j2-related available variables. Note: Kafka 4.x uses Log4j2 exclusively.
 | ---- | ---------------------------- |
 | 9092 | Kafka broker listener port   |
 | 9093 | Kafka controller listener port (KRaft) |
+| 7071 | JMX Exporter metrics port (when enabled) |
 | JMX  | JMX metrics (configurable)   |
 
 Note: JMX metrics are available by default for monitoring Kafka broker performance.
-Configure JMX port via `kafka_opts` variable if needed.
+Configure JMX port via `kafka_jmx_port` variable if needed. For Prometheus monitoring,
+enable the JMX Exporter which exposes metrics on port 7071 (configurable).
 
 ### Directories and Files
 

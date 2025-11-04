@@ -149,6 +149,7 @@ The role templates these Kafka configuration files:
 - `connect-standalone.properties` / `connect-distributed.properties` - Kafka Connect
 - `producer.properties` / `consumer.properties` - Client configs
 - `log4j2.yaml` - Log4j2 configuration (required for Kafka 4.x)
+- `kafka-jmx-exporter.yml` - JMX Exporter configuration for Prometheus (optional, when `kafka_jmx_exporter_enabled: true`)
 
 Note: `zookeeper.properties` is no longer included as ZooKeeper is removed in Kafka 4.0.
 
@@ -221,6 +222,17 @@ The verify stage (`molecule/default/verify.yml`) validates:
 
 **General Dictionary:**
 - `kafka_server_config_params` - Dictionary for additional server.properties entries
+
+**JMX Exporter for Prometheus (Optional):**
+- `kafka_jmx_exporter_enabled: false` - Enable JMX Exporter for Prometheus monitoring
+- `kafka_jmx_exporter_version: 1.0.1` - JMX Exporter version to download
+- `kafka_jmx_exporter_port: 7071` - Port for Prometheus metrics scraping
+- `kafka_jmx_exporter_dir: "{{ kafka_dir }}/jmx_exporter"` - JMX Exporter installation directory
+- `kafka_jmx_exporter_jar: "{{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar"` - JAR file path
+- `kafka_jmx_exporter_config: "{{ kafka_jmx_exporter_dir }}/kafka-jmx-exporter.yml"` - Configuration file path
+- `kafka_jmx_exporter_url` - Maven Central download URL for the JMX Exporter JAR
+
+When enabled, the JMX Exporter runs as a Java agent alongside Kafka and exposes JMX metrics in Prometheus format on the configured port. The role includes a comprehensive configuration that exposes broker, network, controller, log, and JVM metrics. The JMX Exporter is added to the Kafka service via the `KAFKA_OPTS` environment variable.
 
 ## Linting Configuration
 

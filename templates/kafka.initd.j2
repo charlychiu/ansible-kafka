@@ -17,6 +17,11 @@ LOCKFILE=/var/lock/subsys/$prog
 # Declare variables for Kafka
 # shellcheck disable=SC1083
 KAFKA_HOME_DIR={{ kafka_dir }}
+{% if kafka_jmx_exporter_enabled %}
+export KAFKA_OPTS="-javaagent:{{ kafka_jmx_exporter_jar }}={{ kafka_jmx_exporter_port }}:{{ kafka_jmx_exporter_config }}{% if kafka_opts is defined %} {{ kafka_opts }}{% endif %}"
+{% elif kafka_opts is defined %}
+export KAFKA_OPTS="{{ kafka_opts }}"
+{% endif %}
 
 start() {
         echo -n "Starting $prog: "

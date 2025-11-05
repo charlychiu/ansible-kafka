@@ -1,147 +1,143 @@
 ---
 # {{ ansible_managed }}
-# JMX Exporter configuration for Kafka metrics
-# This file configures which JMX MBeans are exposed to Prometheus
+# JMX Exporter configuration for Kafka KRaft metrics
+# Based on: https://github.com/prometheus/jmx_exporter/blob/main/examples/kafka-kraft-3_0_0.yml
+# This configuration filters and transforms Kafka JMX metrics for Prometheus
 
-# Lowercase metric names for better Prometheus compatibility
 lowercaseOutputName: true
-lowercaseOutputLabelNames: true
 
-# Whitelist of ObjectNames to query
-whitelistObjectNames:
-  - kafka.server:type=BrokerTopicMetrics,name=*
-  - kafka.server:type=ReplicaManager,name=*
-  - kafka.server:type=KafkaRequestHandlerPool,name=*
-  - kafka.server:type=Produce
-  - kafka.server:type=Fetch
-  - kafka.server:type=Request
-  - kafka.server:type=DelayedOperationPurgatory,name=*,delayedOperation=*
-  - kafka.controller:type=KafkaController,name=*
-  - kafka.controller:type=ControllerStats,name=*
-  - kafka.network:type=RequestMetrics,name=*,request=*
-  - kafka.network:type=RequestChannel,name=*
-  - kafka.network:type=Processor,name=*,networkProcessor=*
-  - kafka.network:type=SocketServer,name=*
-  - kafka.log:type=LogFlushStats,name=*
-  - kafka.log:type=Log,name=*,topic=*,partition=*
-  - kafka.log:type=LogManager,name=*
-  - kafka.log:type=LogCleaner,name=*
-  - kafka.log:type=LogCleanerManager,name=*
-  - kafka.cluster:type=Partition,name=*,topic=*,partition=*
-  - java.lang:type=Memory
-  - java.lang:type=GarbageCollector,name=*
-  - java.lang:type=Threading
-  - java.lang:type=Runtime
-  - java.lang:type=OperatingSystem
-  - java.nio:type=BufferPool,name=*
-
-# Rules for metric transformation
 rules:
-  # Kafka Server Metrics
-  - pattern: kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value
-    name: kafka_server_$1_$2
-    type: GAUGE
-    labels:
-      clientId: "$3"
-      topic: "$4"
-      partition: "$5"
+# Special cases and very specific rules
+- pattern : kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value
+  name: kafka_server_$1_$2
+  type: GAUGE
+  labels:
+    clientId: "$3"
+    topic: "$4"
+    partition: "$5"
+- pattern : kafka.server<type=(.+), name=(.+), clientId=(.+), brokerHost=(.+), brokerPort=(.+)><>Value
+  name: kafka_server_$1_$2
+  type: GAUGE
+  labels:
+    clientId: "$3"
+    broker: "$4:$5"
+- pattern : kafka.coordinator.(\\w+)<type=(.+), name=(.+)><>Value
+  name: kafka_coordinator_$1_$2_$3
+  type: GAUGE
+# Kraft current state info metric rule
+- pattern: "kafka.server<type=raft-metrics><>current-state: ([a-z]+)"
+  name: kafka_server_raft_metrics_current_state_info
+  type: GAUGE
+  value: 1
+  labels:
+    "state": "$1"
+# Kraft specific rules for raft-metrics, raft-channel-metrics, broker-metadata-metrics
+- pattern: kafka.server<type=(.+)><>([a-z-]+)-total
+  name: kafka_server_$1_$2_total
+  type: COUNTER
+- pattern: kafka.server<type=(.+)><>([a-z-]+)
+  name: kafka_server_$1_$2
+  type: GAUGE
 
-  - pattern: kafka.server<type=(.+), name=(.+), clientId=(.+), brokerHost=(.+), brokerPort=(.+)><>Value
-    name: kafka_server_$1_$2
-    type: GAUGE
-    labels:
-      clientId: "$3"
-      broker: "$4:$5"
+# Generic per-second counters with 0-2 key/value pairs
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)PerSec\\w*, (.+)=(.+), (.+)=(.+)><>Count
+  name: kafka_$1_$2_$3_total
+  type: COUNTER
+  labels:
+    "$4": "$5"
+    "$6": "$7"
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)PerSec\\w*, (.+)=(.+)><>Count
+  name: kafka_$1_$2_$3_total
+  type: COUNTER
+  labels:
+    "$4": "$5"
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)PerSec\\w*><>Count
+  name: kafka_$1_$2_$3_total
+  type: COUNTER
 
-  - pattern: kafka.server<type=(.+), name=(.+), clientId=(.+)><>Value
-    name: kafka_server_$1_$2
-    type: GAUGE
-    labels:
-      clientId: "$3"
+# Quota specific rules
+- pattern: kafka.server<type=(.+), user=(.+), client-id=(.+)><>([a-z-]+)
+  name: kafka_server_quota_$4
+  type: GAUGE
+  labels:
+    resource: "$1"
+    user: "$2"
+    clientId: "$3"
+- pattern: kafka.server<type=(.+), client-id=(.+)><>([a-z-]+)
+  name: kafka_server_quota_$3
+  type: GAUGE
+  labels:
+    resource: "$1"
+    clientId: "$2"
+- pattern: kafka.server<type=(.+), user=(.+)><>([a-z-]+)
+  name: kafka_server_quota_$3
+  type: GAUGE
+  labels:
+    resource: "$1"
+    user: "$2"
 
-  - pattern: kafka.server<type=(.+), name=(.+)><>Value
-    name: kafka_server_$1_$2
-    type: GAUGE
+# Generic gauges with 0-2 key/value pairs
+- pattern: kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Value
+  name: kafka_$1_$2_$3
+  type: GAUGE
+  labels:
+    "$4": "$5"
+    "$6": "$7"
+- pattern: kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.+)><>Value
+  name: kafka_$1_$2_$3
+  type: GAUGE
+  labels:
+    "$4": "$5"
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)><>Value
+  name: kafka_$1_$2_$3
+  type: GAUGE
 
-  # Kafka Network Metrics
-  - pattern: kafka.network<type=(.+), name=(.+), request=(.+)><>(\w+)
-    name: kafka_network_$1_$2
-    type: GAUGE
-    labels:
-      request: "$3"
+# Emulate Prometheus 'Summary' metrics for the exported 'Histogram's.
+#
+# Note that these are missing the '_sum' metric!
+- pattern: kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Count
+  name: kafka_$1_$2_$3_count
+  type: COUNTER
+  labels:
+    "$4": "$5"
+    "$6": "$7"
+- pattern: kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.*), (.+)=(.+)><>(\\d+)thPercentile
+  name: kafka_$1_$2_$3
+  type: GAUGE
+  labels:
+    "$4": "$5"
+    "$6": "$7"
+    quantile: "0.$8"
+- pattern: kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.+)><>Count
+  name: kafka_$1_$2_$3_count
+  type: COUNTER
+  labels:
+    "$4": "$5"
+- pattern: kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.*)><>(\\d+)thPercentile
+  name: kafka_$1_$2_$3
+  type: GAUGE
+  labels:
+    "$4": "$5"
+    quantile: "0.$6"
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)><>Count
+  name: kafka_$1_$2_$3_count
+  type: COUNTER
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)><>(\\d+)thPercentile
+  name: kafka_$1_$2_$3
+  type: GAUGE
+  labels:
+    quantile: "0.$4"
 
-  - pattern: kafka.network<type=(.+), name=(.+)><>Value
-    name: kafka_network_$1_$2
-    type: GAUGE
-
-  # Kafka Controller Metrics
-  - pattern: kafka.controller<type=(.+), name=(.+)><>Value
-    name: kafka_controller_$1_$2
-    type: GAUGE
-
-  # Kafka Log Metrics
-  - pattern: kafka.log<type=(.+), name=(.+), topic=(.+), partition=(.+)><>Value
-    name: kafka_log_$1_$2
-    type: GAUGE
-    labels:
-      topic: "$3"
-      partition: "$4"
-
-  - pattern: kafka.log<type=(.+), name=(.+)><>Value
-    name: kafka_log_$1_$2
-    type: GAUGE
-
-  # Kafka Cluster Metrics
-  - pattern: kafka.cluster<type=(.+), name=(.+), topic=(.+), partition=(.+)><>Value
-    name: kafka_cluster_$1_$2
-    type: GAUGE
-    labels:
-      topic: "$3"
-      partition: "$4"
-
-  # JVM Memory Metrics
-  - pattern: java.lang<type=Memory><HeapMemoryUsage>(\w+)
-    name: jvm_memory_heap_$1
-    type: GAUGE
-
-  - pattern: java.lang<type=Memory><NonHeapMemoryUsage>(\w+)
-    name: jvm_memory_nonheap_$1
-    type: GAUGE
-
-  # JVM GC Metrics
-  - pattern: java.lang<type=GarbageCollector, name=(.+)><>CollectionCount
-    name: jvm_gc_collection_count
-    type: COUNTER
-    labels:
-      gc: "$1"
-
-  - pattern: java.lang<type=GarbageCollector, name=(.+)><>CollectionTime
-    name: jvm_gc_collection_time_ms
-    type: COUNTER
-    labels:
-      gc: "$1"
-
-  # JVM Thread Metrics
-  - pattern: java.lang<type=Threading><>(\w+)
-    name: jvm_threads_$1
-    type: GAUGE
-
-  # JVM Runtime Metrics
-  - pattern: java.lang<type=Runtime><>Uptime
-    name: jvm_runtime_uptime_ms
-    type: COUNTER
-
-  # JVM Operating System Metrics
-  - pattern: java.lang<type=OperatingSystem><>(\w+)
-    name: jvm_os_$1
-    type: GAUGE
-
-  # JVM Buffer Pool Metrics
-  - pattern: java.nio<type=BufferPool, name=(.+)><>(\w+)
-    name: jvm_buffer_pool_$2
-    type: GAUGE
-    labels:
-      pool: "$1"
-
-  # Generic catch-all rule (should be last)
-  - pattern: ".*"
+# Generic gauges for MeanRate Percent
+# Ex) kafka.server<type=KafkaRequestHandlerPool, name=RequestHandlerAvgIdlePercent><>MeanRate
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)Percent\\w*><>MeanRate
+  name: kafka_$1_$2_$3_percent
+  type: GAUGE
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)Percent\\w*><>Value
+  name: kafka_$1_$2_$3_percent
+  type: GAUGE
+- pattern: kafka.(\\w+)<type=(.+), name=(.+)Percent\\w*, (.+)=(.+)><>Value
+  name: kafka_$1_$2_$3_percent
+  type: GAUGE
+  labels:
+    "$4": "$5"

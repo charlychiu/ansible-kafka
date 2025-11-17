@@ -108,7 +108,7 @@ This role includes support for [Prometheus JMX Exporter](https://github.com/prom
 | Variable                      | Default                            | Comments                                                         |
 | ----------------------------- | ---------------------------------- | ---------------------------------------------------------------- |
 | kafka_jmx_exporter_enabled    | false                              | Enable JMX Exporter for Prometheus monitoring                    |
-| kafka_jmx_exporter_version    | 1.0.1                              | JMX Exporter version to download                                 |
+| kafka_jmx_exporter_version    | 1.5.0                              | JMX Exporter version to download                                 |
 | kafka_jmx_exporter_port       | 7071                               | Port for Prometheus to scrape metrics                            |
 | kafka_jmx_exporter_dir        | {{ kafka_dir }}/jmx_exporter       | JMX Exporter installation directory                              |
 | kafka_jmx_exporter_jar        | {{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar | JMX Exporter jar file path |

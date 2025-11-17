@@ -6,7 +6,9 @@
 # - https://github.com/confluentinc/jmx-monitoring-stacks/blob/main/shared-assets/jmx-exporter/kafka_broker.yml
 
 # Wait for Kafka to fully start before collecting metrics
-startDelaySeconds: 120
+# Recommended: 60-120 seconds for production to ensure Kafka is fully initialized
+# Set to 0 for immediate metric collection (may show incomplete data during startup)
+startDelaySeconds: {{ kafka_jmx_exporter_start_delay_seconds }}
 
 # Output formatting
 lowercaseOutputName: true

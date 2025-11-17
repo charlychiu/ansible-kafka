@@ -105,15 +105,16 @@ See <https://github.com/ansible/ansible/issues/71528> for more information.
 
 This role includes support for [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter), which exposes Kafka JMX metrics in Prometheus format for monitoring.
 
-| Variable                      | Default                            | Comments                                                         |
-| ----------------------------- | ---------------------------------- | ---------------------------------------------------------------- |
-| kafka_jmx_exporter_enabled    | false                              | Enable JMX Exporter for Prometheus monitoring                    |
-| kafka_jmx_exporter_version    | 1.5.0                              | JMX Exporter version to download                                 |
-| kafka_jmx_exporter_port       | 7071                               | Port for Prometheus to scrape metrics                            |
-| kafka_jmx_exporter_dir        | {{ kafka_dir }}/jmx_exporter       | JMX Exporter installation directory                              |
-| kafka_jmx_exporter_jar        | {{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar | JMX Exporter jar file path |
-| kafka_jmx_exporter_config     | {{ kafka_jmx_exporter_dir }}/kafka-jmx-exporter.yml | JMX Exporter configuration file path |
-| kafka_jmx_exporter_url        | https://github.com/prometheus/jmx_exporter/releases/download/... | Download URL for JMX Exporter jar (GitHub Releases for >= 1.1.0) |
+| Variable                              | Default                            | Comments                                                         |
+| ------------------------------------- | ---------------------------------- | ---------------------------------------------------------------- |
+| kafka_jmx_exporter_enabled            | false                              | Enable JMX Exporter for Prometheus monitoring                    |
+| kafka_jmx_exporter_version            | 1.5.0                              | JMX Exporter version to download                                 |
+| kafka_jmx_exporter_port               | 7071                               | Port for Prometheus to scrape metrics                            |
+| kafka_jmx_exporter_start_delay_seconds| 30                                 | Startup delay in seconds (15-30 dev, 60-120 production)          |
+| kafka_jmx_exporter_dir                | {{ kafka_dir }}/jmx_exporter       | JMX Exporter installation directory                              |
+| kafka_jmx_exporter_jar                | {{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar | JMX Exporter jar file path |
+| kafka_jmx_exporter_config             | {{ kafka_jmx_exporter_dir }}/kafka-jmx-exporter.yml | JMX Exporter configuration file path |
+| kafka_jmx_exporter_url                | https://github.com/prometheus/jmx_exporter/releases/download/... | Download URL for JMX Exporter jar (GitHub Releases for >= 1.1.0) |
 
 **Example usage:**
 

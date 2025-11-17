@@ -226,6 +226,13 @@ kafka_jmx_exporter_url: "https://github.com/prometheus/jmx_exporter/releases/dow
 # JMX Exporter port for Prometheus metrics scraping
 kafka_jmx_exporter_port: 7071
 
+# JMX Exporter startup delay in seconds before collecting metrics
+# Recommended values:
+#   - Development/Testing: 15-30 seconds (faster feedback)
+#   - Production: 60-120 seconds (ensure Kafka is fully initialized)
+#   - Immediate collection: 0 (may show incomplete metrics during startup)
+kafka_jmx_exporter_start_delay_seconds: 30
+
 # JMX Exporter installation directory
 kafka_jmx_exporter_dir: "{{ kafka_dir }}/jmx_exporter"
 

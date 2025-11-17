@@ -227,6 +227,7 @@ The verify stage (`molecule/default/verify.yml`) validates:
 - `kafka_jmx_exporter_enabled: false` - Enable JMX Exporter for Prometheus monitoring
 - `kafka_jmx_exporter_version: 1.5.0` - JMX Exporter version to download
 - `kafka_jmx_exporter_port: 7071` - Port for Prometheus metrics scraping
+- `kafka_jmx_exporter_start_delay_seconds: 30` - Startup delay before collecting metrics (15-30 for dev, 60-120 for production)
 - `kafka_jmx_exporter_dir: "{{ kafka_dir }}/jmx_exporter"` - JMX Exporter installation directory
 - `kafka_jmx_exporter_jar: "{{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar"` - JAR file path
 - `kafka_jmx_exporter_config: "{{ kafka_jmx_exporter_dir }}/kafka-jmx-exporter.yml"` - Configuration file path

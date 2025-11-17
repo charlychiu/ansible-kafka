@@ -113,7 +113,7 @@ This role includes support for [Prometheus JMX Exporter](https://github.com/prom
 | kafka_jmx_exporter_dir        | {{ kafka_dir }}/jmx_exporter       | JMX Exporter installation directory                              |
 | kafka_jmx_exporter_jar        | {{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar | JMX Exporter jar file path |
 | kafka_jmx_exporter_config     | {{ kafka_jmx_exporter_dir }}/kafka-jmx-exporter.yml | JMX Exporter configuration file path |
-| kafka_jmx_exporter_url        | https://repo1.maven.org/maven2/... | Download URL for JMX Exporter jar                                |
+| kafka_jmx_exporter_url        | https://github.com/prometheus/jmx_exporter/releases/download/... | Download URL for JMX Exporter jar (GitHub Releases for >= 1.1.0) |
 
 **Example usage:**
 

@@ -230,7 +230,7 @@ The verify stage (`molecule/default/verify.yml`) validates:
 - `kafka_jmx_exporter_dir: "{{ kafka_dir }}/jmx_exporter"` - JMX Exporter installation directory
 - `kafka_jmx_exporter_jar: "{{ kafka_jmx_exporter_dir }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar"` - JAR file path
 - `kafka_jmx_exporter_config: "{{ kafka_jmx_exporter_dir }}/kafka-jmx-exporter.yml"` - Configuration file path
-- `kafka_jmx_exporter_url` - Maven Central download URL for the JMX Exporter JAR
+- `kafka_jmx_exporter_url` - Download URL for the JMX Exporter JAR (GitHub Releases for versions >= 1.1.0)
 
 When enabled, the JMX Exporter runs as a Java agent alongside Kafka and exposes JMX metrics in Prometheus format on the configured port. The role includes a comprehensive configuration that exposes broker, network, controller, log, and JVM metrics. The JMX Exporter is added to the Kafka service via the `KAFKA_OPTS` environment variable.
 

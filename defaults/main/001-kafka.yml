@@ -219,7 +219,9 @@ kafka_jmx_exporter_enabled: false
 kafka_jmx_exporter_version: 1.5.0
 
 # JMX Exporter download URL
-kafka_jmx_exporter_url: "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/{{ kafka_jmx_exporter_version }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar"
+# Note: Versions >= 1.1.0 are downloaded from GitHub Releases (not yet in Maven Central)
+#       Versions <= 1.0.1 use Maven Central
+kafka_jmx_exporter_url: "https://github.com/prometheus/jmx_exporter/releases/download/{{ kafka_jmx_exporter_version }}/jmx_prometheus_javaagent-{{ kafka_jmx_exporter_version }}.jar"
 
 # JMX Exporter port for Prometheus metrics scraping
 kafka_jmx_exporter_port: 7071

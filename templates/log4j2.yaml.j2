@@ -40,54 +40,108 @@ Configuration:
         filePattern: "${sys:kafka.logs.dir}/server.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
-        TimeBasedTriggeringPolicy:
-          modulate: true
-          interval: 1
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true
+            interval: 1
+        DefaultRolloverStrategy:
+          Delete:
+            basePath: "${sys:kafka.logs.dir}"
+            maxDepth: 1
+            IfFileName:
+              glob: "server.log.*"
+            IfLastModified:
+              age: "{{ log4j2_max_backup_days }}d"
       # State Change appender
       - name: StateChangeAppender
         fileName: "${sys:kafka.logs.dir}/state-change.log"
         filePattern: "${sys:kafka.logs.dir}/state-change.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
-        TimeBasedTriggeringPolicy:
-          modulate: true
-          interval: 1
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true
+            interval: 1
+        DefaultRolloverStrategy:
+          Delete:
+            basePath: "${sys:kafka.logs.dir}"
+            maxDepth: 1
+            IfFileName:
+              glob: "state-change.log.*"
+            IfLastModified:
+              age: "{{ log4j2_max_backup_days }}d"
       # Request appender
       - name: RequestAppender
         fileName: "${sys:kafka.logs.dir}/kafka-request.log"
         filePattern: "${sys:kafka.logs.dir}/kafka-request.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
-        TimeBasedTriggeringPolicy:
-          modulate: true
-          interval: 1
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true
+            interval: 1
+        DefaultRolloverStrategy:
+          Delete:
+            basePath: "${sys:kafka.logs.dir}"
+            maxDepth: 1
+            IfFileName:
+              glob: "kafka-request.log.*"
+            IfLastModified:
+              age: "{{ log4j2_max_backup_days }}d"
       # Cleaner appender
       - name: CleanerAppender
         fileName: "${sys:kafka.logs.dir}/log-cleaner.log"
         filePattern: "${sys:kafka.logs.dir}/log-cleaner.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
-        TimeBasedTriggeringPolicy:
-          modulate: true
-          interval: 1
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true
+            interval: 1
+        DefaultRolloverStrategy:
+          Delete:
+            basePath: "${sys:kafka.logs.dir}"
+            maxDepth: 1
+            IfFileName:
+              glob: "log-cleaner.log.*"
+            IfLastModified:
+              age: "{{ log4j2_max_backup_days }}d"
       # Controller appender
       - name: ControllerAppender
         fileName: "${sys:kafka.logs.dir}/controller.log"
         filePattern: "${sys:kafka.logs.dir}/controller.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
-        TimeBasedTriggeringPolicy:
-          modulate: true
-          interval: 1
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true
+            interval: 1
+        DefaultRolloverStrategy:
+          Delete:
+            basePath: "${sys:kafka.logs.dir}"
+            maxDepth: 1
+            IfFileName:
+              glob: "controller.log.*"
+            IfLastModified:
+              age: "{{ log4j2_max_backup_days }}d"
       # Authorizer appender
       - name: AuthorizerAppender
         fileName: "${sys:kafka.logs.dir}/kafka-authorizer.log"
         filePattern: "${sys:kafka.logs.dir}/kafka-authorizer.log.%d{ {{- log4j2_file_pattern_date -}} }"
         PatternLayout:
           pattern: "${logPattern}"
-        TimeBasedTriggeringPolicy:
-          modulate: true
-          interval: 1
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true
+            interval: 1
+        DefaultRolloverStrategy:
+          Delete:
+            basePath: "${sys:kafka.logs.dir}"
+            maxDepth: 1
+            IfFileName:
+              glob: "kafka-authorizer.log.*"
+            IfLastModified:
+              age: "{{ log4j2_max_backup_days }}d"
 
   # Loggers configuration
   # See: https://logging.apache.org/log4j/2.x/manual/configuration.html#configuring-loggers

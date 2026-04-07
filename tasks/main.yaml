@@ -67,6 +67,11 @@
   tags:
     - kafka_java
 
+# Prefer page cache eviction over swapping to avoid unpredictable latency spikes.
+# Setting swappiness=1 (not 0) because Linux kernel >= 3.5 treats 0 as "never swap",
+# which can trigger OOM kills instead of graceful degradation.
+# Ref: "Kafka: The Definitive Guide" 2nd Ed (O'Reilly), Ch.2 "Virtual memory", pp.79-80
+# Note: Apache Kafka official docs do NOT mention swappiness; this is a community best practice.
 - name: Set vm.swappiness to 1 for Kafka optimization
   ansible.posix.sysctl:
     name: vm.swappiness

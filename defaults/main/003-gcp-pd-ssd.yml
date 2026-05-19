@@ -1,0 +1,50 @@
+---
+############################# GCP pd-ssd tuning #############################
+# Opt-in disk + kernel tuning for Kafka running on Google Cloud
+# Persistent Disk SSD (pd-ssd). Disabled by default; enable ONLY on GCP
+# hosts (set kafka_pd_ssd_tuning=true in the GCP inventory).
+#
+# SAFETY CONTRACT: with kafka_pd_ssd_tuning=true the role creates an XFS
+# filesystem on kafka_pd_ssd_device IF AND ONLY IF the device has no
+# existing filesystem signature. An existing filesystem is never wiped
+# (community.general.filesystem runs with force=false AND the mkfs task
+# is guarded by an explicit blkid probe), so already-provisioned
+# clusters keep their data.
+kafka_pd_ssd_tuning: false
+
+# Block device backing the Kafka data directory. On GCP an attached
+# Persistent Disk appears as /dev/disk/by-id/google-<attach device-name>.
+# REQUIRED (must be non-empty) when kafka_pd_ssd_tuning=true.
+kafka_pd_ssd_device: ""
+
+# Filesystem created on the data device. XFS is the filesystem
+# recommended by the Apache Kafka / Confluent operations docs.
+kafka_pd_ssd_fstype: xfs
+
+# Userspace tools that provide mkfs.<kafka_pd_ssd_fstype>. These are not
+# guaranteed to be present on minimal cloud images and are installed
+# (when kafka_pd_ssd_tuning=true) before the filesystem is created.
+# Change to match kafka_pd_ssd_fstype, e.g. ['e2fsprogs'] for ext4.
+kafka_pd_ssd_fs_packages:
+  - xfsprogs
+
+# Mount options for the Kafka data filesystem.
+# noatime/nodiratime drop read-path metadata writes (Kafka is read-heavy).
+# 'discard' is intentionally NOT set: GCP Persistent Disk is not a raw
+# SSD, so online TRIM adds overhead with no benefit (a periodic fstrim
+# is sufficient).
+kafka_pd_ssd_mount_opts: "noatime,nodiratime"
+
+# Kernel VM tuning applied (only) when kafka_pd_ssd_tuning=true.
+# vm.max_map_count: Kafka mmaps index files; the 65530 default is too
+#   low for brokers with many partitions/segments and triggers
+#   "Map failed". 262144 is the value recommended by Confluent's
+#   deployment guide.
+# vm.dirty_background_ratio / vm.dirty_ratio: begin writeback early and
+#   allow a large in-flight buffer to absorb write bursts.
+#   Ref: "Kafka: The Definitive Guide" 2nd Ed (O'Reilly), Ch.2, pp.80-81.
+#   Community best practice; not part of Apache Kafka official docs.
+kafka_pd_ssd_sysctl:
+  vm.max_map_count: "262144"
+  vm.dirty_background_ratio: "5"
+  vm.dirty_ratio: "60"

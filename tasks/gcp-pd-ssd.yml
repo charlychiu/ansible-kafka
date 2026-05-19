@@ -1,0 +1,117 @@
+---
+# GCP Persistent Disk SSD (pd-ssd) disk + kernel tuning.
+# Included from tasks/main.yaml only when kafka_pd_ssd_tuning is true.
+# Safety contract documented in defaults/main/003-gcp-pd-ssd.yml.
+
+- name: Assert pd-ssd device is configured
+  ansible.builtin.assert:
+    that:
+      - kafka_pd_ssd_device | default('') | length > 0
+    fail_msg: >-
+      kafka_pd_ssd_tuning is true but kafka_pd_ssd_device is empty. Set it
+      to the attached GCP disk, e.g. /dev/disk/by-id/google-kafka-data.
+  tags:
+    - kafka_pd_ssd
+
+- name: Stat the pd-ssd block device
+  ansible.builtin.stat:
+    path: "{{ kafka_pd_ssd_device }}"
+  register: kafka_pd_ssd_dev_stat
+  tags:
+    - kafka_pd_ssd
+
+- name: Assert the pd-ssd block device exists
+  ansible.builtin.assert:
+    that:
+      - kafka_pd_ssd_dev_stat.stat.exists
+    fail_msg: >-
+      pd-ssd device {{ kafka_pd_ssd_device }} not found on
+      {{ inventory_hostname }}. Attach the disk before running.
+  tags:
+    - kafka_pd_ssd
+
+- name: Probe existing filesystem signature on pd-ssd device
+  ansible.builtin.command:
+    cmd: "blkid -p -s TYPE -o value {{ kafka_pd_ssd_device }}"
+  register: kafka_pd_ssd_blkid
+  changed_when: false
+  # blkid exit codes: 0 = signature found, 2 = nothing found. Any other rc
+  # (missing binary, unreadable device, usage error) is a real failure and
+  # must abort the play -- otherwise an empty stdout would be misread as
+  # "no filesystem" and fall through to mkfs, defeating the safety contract.
+  failed_when: kafka_pd_ssd_blkid.rc not in [0, 2]
+  become: true
+  tags:
+    - kafka_pd_ssd
+
+- name: Report pd-ssd filesystem decision
+  ansible.builtin.debug:
+    msg: >-
+      {{ kafka_pd_ssd_device }} existing filesystem:
+      '{{ kafka_pd_ssd_blkid.stdout | trim }}'
+      ->
+      {{ 'create ' ~ kafka_pd_ssd_fstype
+         if (kafka_pd_ssd_blkid.stdout | trim | length == 0)
+         else 'left untouched (no mkfs)' }}
+  tags:
+    - kafka_pd_ssd
+
+# mkfs.<fstype> is not guaranteed to exist on minimal cloud images, so the
+# userspace tools must be installed before the filesystem is created.
+- name: Ensure filesystem tools for the pd-ssd filesystem are installed
+  ansible.builtin.package:
+    name: "{{ kafka_pd_ssd_fs_packages }}"
+    state: present
+  become: true
+  when: kafka_pd_ssd_fs_packages | length > 0
+  tags:
+    - kafka_pd_ssd
+
+# force=false plus this when-guard are independent safeguards: an existing
+# filesystem signature means we skip mkfs entirely and never risk data loss.
+- name: Create filesystem on pd-ssd device (only when device has no filesystem)
+  community.general.filesystem:
+    fstype: "{{ kafka_pd_ssd_fstype }}"
+    dev: "{{ kafka_pd_ssd_device }}"
+    force: false
+  become: true
+  when: kafka_pd_ssd_blkid.stdout | trim | length == 0
+  tags:
+    - kafka_pd_ssd
+
+- name: Ensure Kafka data mount point exists
+  ansible.builtin.file:
+    path: "{{ kafka_data_log_dirs.split(',')[0] }}"
+    state: directory
+    mode: '0755'
+  become: true
+  tags:
+    - kafka_pd_ssd
+
+- name: Mount pd-ssd at the Kafka data directory and persist to fstab
+  ansible.posix.mount:
+    path: "{{ kafka_data_log_dirs.split(',')[0] }}"
+    src: "{{ kafka_pd_ssd_device }}"
+    fstype: "{{ kafka_pd_ssd_fstype }}"
+    opts: "{{ kafka_pd_ssd_mount_opts }}"
+    dump: '0'
+    passno: '0'
+    state: mounted
+  become: true
+  tags:
+    - kafka_pd_ssd
+
+- name: Apply pd-ssd kernel VM tuning
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: true
+    reload: true
+  loop: "{{ kafka_pd_ssd_sysctl | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}={{ item.value }}"
+  become: true
+  tags:
+    - kafka_pd_ssd
+    - kafka_sysctl

@@ -220,6 +220,16 @@ The verify stage (`molecule/default/verify.yml`) validates:
 - `kafka_data_log_dirs: /var/lib/kafka/logs` - Data storage location
 - `kafka_log_dir: /var/log/kafka` - Application log directory
 
+**GCP pd-ssd tuning (opt-in, default off):**
+- `kafka_pd_ssd_tuning: false` - Enable disk + kernel tuning for GCP Persistent Disk SSD. Enable only on GCP hosts (set in `hosts.gcp.ini`).
+- `kafka_pd_ssd_device: ""` - Block device for the data dir, e.g. `/dev/disk/by-id/google-<attach device-name>`. **Required** when tuning is enabled.
+- `kafka_pd_ssd_fstype: xfs` - Filesystem created on the data device (Kafka/Confluent recommend XFS).
+- `kafka_pd_ssd_fs_packages: [xfsprogs]` - mkfs tooling installed before formatting (minimal images lack it). Set to `[e2fsprogs]` for ext4.
+- `kafka_pd_ssd_mount_opts: "noatime,nodiratime"` - Mount options (no `discard`; GCP PD is not a raw SSD).
+- `kafka_pd_ssd_sysctl` - VM tuning dict (`vm.max_map_count=262144`, `vm.dirty_background_ratio=5`, `vm.dirty_ratio=60`).
+
+When enabled, `tasks/gcp-pd-ssd.yml` runs early (after the `vm.swappiness` task, before user/group creation and KRaft format) so the data directory sits on the pd-ssd mount before it is owned/formatted. **Safety contract:** the `blkid` probe only tolerates rc 0/2 (any other error aborts the play), mkfs runs only when no existing filesystem signature is found, and `community.general.filesystem` is invoked with `force: false` — an already-provisioned disk is never wiped. The mkfs tooling (`kafka_pd_ssd_fs_packages`) is installed before formatting. Requires the `community.general` collection (see `requirements.yml`).
+
 **General Dictionary:**
 - `kafka_server_config_params` - Dictionary for additional server.properties entries
 

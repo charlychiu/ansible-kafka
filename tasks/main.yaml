@@ -83,6 +83,15 @@
   tags:
     - kafka_sysctl
 
+# GCP pd-ssd disk + kernel tuning. Opt-in (default false), enabled only on
+# GCP hosts. Runs before data dirs are created/owned and before KRaft
+# storage is formatted so the data directory is on the pd-ssd mount.
+- name: Apply GCP pd-ssd disk and kernel tuning
+  ansible.builtin.include_tasks: gcp-pd-ssd.yml
+  when: kafka_pd_ssd_tuning | bool
+  tags:
+    - kafka_pd_ssd
+
 - name: Create kafka group
   ansible.builtin.group:
     name: '{{ kafka_group }}'

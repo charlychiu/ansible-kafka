@@ -35,7 +35,11 @@
     cmd: "blkid -p -s TYPE -o value {{ kafka_pd_ssd_device }}"
   register: kafka_pd_ssd_blkid
   changed_when: false
-  failed_when: false
+  # blkid exit codes: 0 = signature found, 2 = nothing found. Any other rc
+  # (missing binary, unreadable device, usage error) is a real failure and
+  # must abort the play -- otherwise an empty stdout would be misread as
+  # "no filesystem" and fall through to mkfs, defeating the safety contract.
+  failed_when: kafka_pd_ssd_blkid.rc not in [0, 2]
   become: true
   tags:
     - kafka_pd_ssd
@@ -49,6 +53,17 @@
       {{ 'create ' ~ kafka_pd_ssd_fstype
          if (kafka_pd_ssd_blkid.stdout | trim | length == 0)
          else 'left untouched (no mkfs)' }}
+  tags:
+    - kafka_pd_ssd
+
+# mkfs.<fstype> is not guaranteed to exist on minimal cloud images, so the
+# userspace tools must be installed before the filesystem is created.
+- name: Ensure filesystem tools for the pd-ssd filesystem are installed
+  ansible.builtin.package:
+    name: "{{ kafka_pd_ssd_fs_packages }}"
+    state: present
+  become: true
+  when: kafka_pd_ssd_fs_packages | length > 0
   tags:
     - kafka_pd_ssd
 

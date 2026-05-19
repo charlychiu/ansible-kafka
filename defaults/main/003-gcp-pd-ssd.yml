@@ -21,6 +21,13 @@ kafka_pd_ssd_device: ""
 # recommended by the Apache Kafka / Confluent operations docs.
 kafka_pd_ssd_fstype: xfs
 
+# Userspace tools that provide mkfs.<kafka_pd_ssd_fstype>. These are not
+# guaranteed to be present on minimal cloud images and are installed
+# (when kafka_pd_ssd_tuning=true) before the filesystem is created.
+# Change to match kafka_pd_ssd_fstype, e.g. ['e2fsprogs'] for ext4.
+kafka_pd_ssd_fs_packages:
+  - xfsprogs
+
 # Mount options for the Kafka data filesystem.
 # noatime/nodiratime drop read-path metadata writes (Kafka is read-heavy).
 # 'discard' is intentionally NOT set: GCP Persistent Disk is not a raw
